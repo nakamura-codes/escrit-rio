@@ -3,7 +3,9 @@
 (() => {
   'use strict';
 
-  const SAVE_VERSION = 1;
+  const SAVE_VERSION = 2;
+  const ENEMIES_PER_PHASE = 10;
+  const PHASES_PER_ZONE = 10;
   const PROFILE_INDEX_KEY = 'cinzas_profiles_v1';
   const SAVE_PREFIX = 'cinzas_save_v1_';
   const MAX_NUMBER = 1e250;
@@ -25,12 +27,12 @@
     {id: 'lendario', label: 'Lendário', multiplier: 5}
   ];
   const ZONES = [
-    {name: 'Campos de Cinza', subtitle: 'Onde os primeiros condenados despertam.', names: ['Condenado Errante', 'Devorador de Ossos', 'Sentinela Caída'], level: 1, kills: 0, rune: 'I', art: 'skeleton'},
-    {name: 'Bosque Profanado', subtitle: 'Raízes antigas escondem fome e maldição.', names: ['Fera Espinhosa', 'Rastejante Pútrido', 'Lobo da Praga'], level: 5, kills: 20, rune: 'II', art: 'beast'},
-    {name: 'Criptas Afogadas', subtitle: 'Os ecos dos esquecidos nunca se calam.', names: ['Espectro da Cripta', 'Alma Enregelada', 'Lamento Submerso'], level: 12, kills: 65, rune: 'III', art: 'wraith'},
-    {name: 'Fortaleza de Ferro', subtitle: 'O aço morto ainda guarda seus segredos.', names: ['Golem Ferrugem', 'Carcereiro Rúnico', 'Guardião de Basalto'], level: 23, kills: 150, rune: 'IV', art: 'golem'},
-    {name: 'Fendas Infernais', subtitle: 'Onde os pactos são escritos em brasas.', names: ['Arauto das Chamas', 'Demônio Carmesim', 'Flagelo Abissal'], level: 38, kills: 300, rune: 'V', art: 'demon'},
-    {name: 'Trono do Crepúsculo', subtitle: 'O fim de toda luz. O início de outra era.', names: ['Lich Imortal', 'Rei das Sombras', 'Devorador de Estrelas'], level: 60, kills: 600, rune: 'VI', art: 'lich'}
+    {name: 'Campos de Cinza', subtitle: 'Onde os primeiros condenados despertam.', names: ['Condenado Errante', 'Devorador de Ossos', 'Sentinela Caída', 'Arqueiro Macabro', 'Coveiro Corrompido'], miniboss:'Carrasco das Cinzas', boss:'Rei dos Ossos', level: 1, kills: 0, rune: 'I', art: 'skeleton'},
+    {name: 'Bosque Profanado', subtitle: 'Raízes antigas escondem fome e maldição.', names: ['Fera Espinhosa', 'Rastejante Pútrido', 'Lobo da Praga', 'Entorpecido de Musgo', 'Caçador Silvestre'], miniboss:'Matriarca da Peste', boss:'Guardião do Bosque Morto', level: 5, kills: 20, rune: 'II', art: 'beast'},
+    {name: 'Criptas Afogadas', subtitle: 'Os ecos dos esquecidos nunca se calam.', names: ['Espectro da Cripta', 'Alma Enregelada', 'Lamento Submerso', 'Afogado Sem Rosto', 'Sacerdote Esquecido'], miniboss:'Pranteadora Abissal', boss:'Senhor das Criptas', level: 12, kills: 65, rune: 'III', art: 'wraith'},
+    {name: 'Fortaleza de Ferro', subtitle: 'O aço morto ainda guarda seus segredos.', names: ['Golem Ferrugem', 'Carcereiro Rúnico', 'Guardião de Basalto', 'Espadachim Oco', 'Construto Enferrujado'], miniboss:'Sentinela de Ferro Negro', boss:'Colosso da Fortaleza', level: 23, kills: 150, rune: 'IV', art: 'golem'},
+    {name: 'Fendas Infernais', subtitle: 'Onde os pactos são escritos em brasas.', names: ['Arauto das Chamas', 'Demônio Carmesim', 'Flagelo Abissal', 'Súcubo das Cinzas', 'Sombra Incandescente'], miniboss:'Duque das Brasas', boss:'Suserano Infernal', level: 38, kills: 300, rune: 'V', art: 'demon'},
+    {name: 'Trono do Crepúsculo', subtitle: 'O fim de toda luz. O início de outra era.', names: ['Lich Imortal', 'Rei das Sombras', 'Devorador de Estrelas', 'Sacerdote do Vazio', 'Arauto do Eclipse'], miniboss:'Arauto do Fim', boss:'Imperador do Crepúsculo', level: 60, kills: 600, rune: 'VI', art: 'lich'}
   ];
   const UPGRADES = [
     {id: 'strike', icon: '⚔', title: 'Lâmina Afiada', desc: 'Reforce os golpes para causar mais dano a cada clique.', base: 12, growth: 1.16, effect: '+2,4 dano por nível'},
@@ -114,16 +116,30 @@
   const timeLabel = () => new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
   const randEventDelay = () => rand(39000, 75000);
   const validZone = (z) => Math.min(ZONES.length-1, integer(z, 0, 0, ZONES.length-1));
-  const rewardGold = (state) => Math.floor(multiply(12 * power(2.35, state.zone), 1 + Math.min(30000, state.zoneKills[state.zone]) * .075));
-  const rewardXp = (state) => Math.floor(multiply(9 * power(1.95, state.zone), 1 + Math.min(30000, state.zoneKills[state.zone]) * .05));
-  const maxMobHp = (state) => Math.floor(multiply(28 * power(2.9, state.zone), 1 + Math.min(30000, state.zoneKills[state.zone]) * .023));
-  const unlockedZone = (s, z) => s.level >= ZONES[z].level && s.runKills >= ZONES[z].kills;
-  const freshMob = (s) => {
-    const maxHp = Math.max(1, maxMobHp(s));
-    return {name:pick(ZONES[s.zone].names),hp:maxHp,maxHp, level:1 + s.zone * 9 + Math.floor(s.zoneKills[s.zone]/12)};
+  const freshProgress = () => ({stage:1,kills:0,minibossDefeated:false,bossDefeated:false,cleared:false});
+  const progressAt = (s) => s.zoneProgress[s.zone];
+  // Bosses remain mandatory: no amount of farming, XP or offline DPS skips them.
+  const unlockedZone = (s,z) => z === 0 || s.zoneProgress[z-1].cleared;
+  const requiredBossKind = (progress) => progress.cleared ? null :
+    (progress.stage === 5 && progress.kills >= ENEMIES_PER_PHASE && !progress.minibossDefeated ? 'miniboss' :
+    (progress.stage === PHASES_PER_ZONE && progress.kills >= ENEMIES_PER_PHASE && !progress.bossDefeated ? 'boss' : null));
+  const phaseMultiplier = (s) => power(1.36,progressAt(s).stage-1);
+  const rewardGold = (s) => Math.max(1,Math.floor(multiply(12 * power(2.35,s.zone),multiply(phaseMultiplier(s),1+Math.min(10000,s.zoneKills[s.zone])*.0075))));
+  const rewardXp = (s) => Math.max(1,Math.floor(multiply(9 * power(1.95,s.zone),multiply(phaseMultiplier(s),1+Math.min(10000,s.zoneKills[s.zone])*.005))));
+  const maxMobHp = (s,kind='normal') => {
+    const base=multiply(28*power(2.9,s.zone),phaseMultiplier(s));
+    return Math.max(1,Math.floor(multiply(base,kind==='boss'?18:kind==='miniboss'?9:1)));
+  };
+  const freshMob = (s,previousName='') => {
+    const zone=ZONES[s.zone],progress=progressAt(s);
+    const kind=requiredBossKind(progress)||'normal';
+    const names=zone.names.filter(name=>name!==previousName);
+    const maxHp=maxMobHp(s,kind);
+    const name=kind==='boss'?zone.boss:kind==='miniboss'?zone.miniboss:pick(names.length?names:zone.names);
+    return {name,kind,hp:maxHp,maxHp,level:1+s.zone*12+(progress.stage-1)*2+(kind==='normal'?0:kind==='boss'?4:2)};
   };
   const newState = (name) => {
-    const s = {version:SAVE_VERSION,name:safeName(name,18) || 'Errante',createdAt:now(),lastSeen:now(),level:1,xp:0,gold:0,souls:0,shards:0,zone:0,zoneKills:Array(ZONES.length).fill(0),upgrades:emptyRanks(UPGRADES),skills:emptyRanks(SKILLS),inventory:[],equipment:Object.fromEntries(SLOTS.map(x=>[x,null])),mob:null,event:null,nextEventAt:now()+randEventDelay(),lastEventAt:0,runKills:0,runGold:0,lifetimeKills:0,rebirths:0};
+    const s = {version:SAVE_VERSION,name:safeName(name,18) || 'Errante',createdAt:now(),lastSeen:now(),level:1,xp:0,gold:0,souls:0,shards:0,zone:0,zoneKills:Array(ZONES.length).fill(0),zoneProgress:ZONES.map(freshProgress),upgrades:emptyRanks(UPGRADES),skills:emptyRanks(SKILLS),inventory:[],equipment:Object.fromEntries(SLOTS.map(x=>[x,null])),mob:null,event:null,nextEventAt:now()+randEventDelay(),lastEventAt:0,runKills:0,runGold:0,lifetimeKills:0,rebirths:0};
     s.mob = freshMob(s);
     return s;
   };
@@ -152,8 +168,49 @@
     for (const x of UPGRADES) s.upgrades[x.id] = integer(raw.upgrades?.[x.id],0,0,MAX_RANK);
     for (const x of SKILLS) s.skills[x.id] = integer(raw.skills?.[x.id],0,0,x.max);
     if (Array.isArray(raw.zoneKills)) s.zoneKills = ZONES.map((_,i)=>integer(raw.zoneKills[i],0,0,1e10));
-    s.zone = validZone(raw.zone);
-    if (!unlockedZone(s,s.zone)) s.zone = ZONES.reduce((z,_,i)=>unlockedZone(s,i) ? i : z,0);
+    if (Array.isArray(raw.zoneProgress) && raw.version === SAVE_VERSION) {
+      s.zoneProgress=ZONES.map((_,i)=>{
+        const r=raw.zoneProgress[i] || {};
+        const p=freshProgress();
+        p.stage=integer(r.stage,1,1,PHASES_PER_ZONE);
+        p.kills=integer(r.kills,0,0,ENEMIES_PER_PHASE);
+        p.minibossDefeated=Boolean(r.minibossDefeated);
+        p.bossDefeated=Boolean(r.bossDefeated);
+        p.cleared=Boolean(r.cleared);
+        // Reject inconsistent stage/boss flags from malformed backups.
+        if(p.stage>5)p.minibossDefeated=true;
+        if(p.bossDefeated && p.stage===PHASES_PER_ZONE)p.cleared=true;
+        if(p.cleared){p.stage=PHASES_PER_ZONE;p.kills=ENEMIES_PER_PHASE;p.minibossDefeated=true;p.bossDefeated=true;}
+        else {
+          p.bossDefeated=false;
+          if(p.stage<5)p.minibossDefeated=false;
+          if(p.stage===5 && p.minibossDefeated){p.stage=6;p.kills=0;}
+          if(p.stage<PHASES_PER_ZONE && p.kills===ENEMIES_PER_PHASE && p.stage!==5){p.stage++;p.kills=0;}
+        }
+        return p;
+      });
+      // A zone can only be reached after finishing the preceding zone.
+      for(let i=1;i<ZONES.length;i++)if(!s.zoneProgress[i-1].cleared)s.zoneProgress[i]=freshProgress();
+    }else{
+      // v1 migration: previously unlocked regions stay available; progress is
+      // converted to phases, with the new boss checkpoints still required.
+      let legacyReached=0;
+      for(let i=1;i<ZONES.length;i++)if(s.level>=ZONES[i].level && s.runKills>=ZONES[i].kills)legacyReached=i;
+      legacyReached=Math.max(legacyReached,validZone(raw.zone));
+      for(let i=0;i<legacyReached;i++){
+        s.zoneProgress[i]={stage:10,kills:10,minibossDefeated:true,bossDefeated:true,cleared:true};
+      }
+      const current=s.zoneProgress[legacyReached];
+      const historicalKills=s.zoneKills[legacyReached];
+      if(historicalKills>=40){
+        current.stage=5;current.kills=10;current.minibossDefeated=false;
+      }else{
+        current.stage=1+Math.floor(historicalKills/ENEMIES_PER_PHASE);
+        current.kills=historicalKills%ENEMIES_PER_PHASE;
+      }
+    }
+    s.zone=validZone(raw.zone);
+    if(!unlockedZone(s,s.zone))s.zone=ZONES.reduce((z,_,i)=>unlockedZone(s,i)?i:z,0);
     const seen = new Set();
     if (Array.isArray(raw.inventory)) for (const entry of raw.inventory.slice(0,MAX_INVENTORY)) {
       const item = normalizeItem(entry);
@@ -164,10 +221,13 @@
       s.equipment[slot] = s.inventory.some(i=>i.id===id && i.slot===slot) ? id : null;
     }
     s.mob = freshMob(s);
-    if (raw.mob && typeof raw.mob === 'object') {
-      const maxHp = Math.max(1,maxMobHp(s));
-      s.mob = {name:ZONES[s.zone].names.includes(raw.mob.name) ? raw.mob.name : pick(ZONES[s.zone].names),hp:number(raw.mob.hp,maxHp,0,maxHp),maxHp,level:1+s.zone*9+Math.floor(s.zoneKills[s.zone]/12)};
-      if (!s.mob.hp) s.mob = freshMob(s);
+    if(raw.mob && typeof raw.mob==='object' && raw.version===SAVE_VERSION){
+      const kind=requiredBossKind(progressAt(s))||'normal';
+      const expectedMax=maxMobHp(s,kind);
+      // Rebuild identity and maximum health from trusted area/phase definitions.
+      const name=kind==='boss'?ZONES[s.zone].boss:kind==='miniboss'?ZONES[s.zone].miniboss:
+        (ZONES[s.zone].names.includes(raw.mob.name)?raw.mob.name:s.mob.name);
+      s.mob={name,kind,hp:number(raw.mob.hp,expectedMax,0,expectedMax)||expectedMax,maxHp:expectedMax,level:s.mob.level};
     }
     s.lastEventAt = integer(raw.lastEventAt,0,0,now());
     s.nextEventAt = integer(raw.nextEventAt,now()+randEventDelay(),0,now()+120000);
@@ -371,8 +431,11 @@
       const content=document.createElement('div');const paragraph=document.createElement('p');paragraph.textContent=text;
       const date=document.createElement('time');date.textContent=timeLabel();
       content.append(paragraph,date);row.append(symbol,content);
-      const log=$('combatLog');log.prepend(row);
-      while(log.children.length>40)log.lastElementChild.remove();
+      const log=$('combatLog');
+      const historyOpen=log.scrollTop>12,previousHeight=log.scrollHeight;
+      log.prepend(row);
+      while(log.children.length>70)log.lastElementChild.remove();
+      log.scrollTop=historyOpen?log.scrollTop+(log.scrollHeight-previousHeight):0;
     }
     formatDuration(seconds) {
       const total=Math.floor(seconds);
@@ -428,20 +491,33 @@
     }
     grantOffline(seconds) {
       const s=this.state;
-      if(!s || seconds<1)return {kills:0,gold:0,xp:0};
+      if(!s||seconds<1)return {kills:0,gold:0,xp:0};
       const bonus=this.bonuses();
       if(bonus.dps<=0)return {kills:0,gold:0,xp:0};
-      const hp=Math.max(1,maxMobHp(s));
-      const damage=multiply(bonus.dps,Math.min(MAX_OFFLINE_SECONDS,seconds));
-      const kills=Math.min(MAX_OFFLINE_KILLS,Math.floor(damage/hp));
-      if(kills<=0)return {kills:0,gold:0,xp:0};
-      const gold=Math.floor(multiply(multiply(rewardGold(s),kills),bonus.gold*bonus.offline));
-      const xp=Math.floor(multiply(multiply(rewardXp(s),kills),bonus.offline));
-      this.awardGold(gold);
-      s.runKills+=kills;s.lifetimeKills+=kills;s.zoneKills[s.zone]+=kills;
-      this.awardXp(xp);
-      s.mob=freshMob(s);
-      return {kills,gold,xp};
+      let remaining=multiply(bonus.dps,Math.min(MAX_OFFLINE_SECONDS,seconds)*bonus.offline);
+      let kills=0,gold=0,xp=0;
+      // At most 100 regular enemies are simulated before each mandatory boss.
+      // Offline progression stops at the miniboss/boss, so gated areas cannot be skipped.
+      while(remaining>0 && kills<MAX_OFFLINE_KILLS && !requiredBossKind(progressAt(s))){
+        const mob=s.mob;
+        if(mob.kind!=='normal'){s.mob=freshMob(s);break;}
+        if(remaining<mob.hp){mob.hp-=remaining;break;}
+        remaining-=mob.hp;
+        gold=add(gold,multiply(rewardGold(s),bonus.gold));
+        xp=add(xp,rewardXp(s));
+        s.runKills++;s.lifetimeKills++;s.zoneKills[s.zone]++;
+        const progress=progressAt(s);
+        if(!progress.cleared){
+          progress.kills++;
+          if(progress.kills===ENEMIES_PER_PHASE && progress.stage!==5 && progress.stage!==10){
+            progress.stage++;progress.kills=0;
+          }
+        }
+        kills++;
+        s.mob=freshMob(s,mob.name);
+      }
+      if(kills){this.awardGold(Math.floor(gold));this.awardXp(Math.floor(xp));}
+      return {kills,gold:Math.floor(gold),xp:Math.floor(xp)};
     }
     stepClock() {
       if(!this.state)return;
@@ -507,21 +583,61 @@
     }
     killMob() {
       const s=this.state;
-      const name=s.mob?.name || 'Condenado';
-      const gold=Math.floor(multiply(rewardGold(s),this.bonuses().gold));
-      const xp=rewardXp(s);
+      const defeated=s.mob;
+      const kind=defeated.kind||'normal';
+      const name=defeated.name;
+      const multiplier=kind==='boss'?18:kind==='miniboss'?7:1;
+      const gold=Math.floor(multiply(multiply(rewardGold(s),multiplier),this.bonuses().gold));
+      const xp=Math.floor(multiply(rewardXp(s),kind==='boss'?14:kind==='miniboss'?6:1));
       this.awardGold(gold);
       s.runKills++;s.lifetimeKills++;s.zoneKills[s.zone]++;
       this.awardXp(xp);
-      const loot=this.bonuses().drop;
-      if(Math.random()<loot)this.dropItem();
-      if(s.runKills<5 || s.runKills%6===0)this.addLog(`${name} derrotado. +${fmt(gold)} ouro · +${fmt(xp)} XP.`,'⚔');
-      if(s.runKills===20 || s.runKills===65 || s.runKills===150 || s.runKills===300 || s.runKills===600) {
-        this.toast('Novo marco da jornada alcançado!','good');this.renderPanel();
+      const progress=progressAt(s);
+      let travelNext=false;
+      if(kind==='miniboss'){
+        progress.minibossDefeated=true;
+        progress.stage=6;progress.kills=0;
+        this.dropItem('raro');
+        this.addLog(`MINIBOSS ${name} vencido! Fase 6 desbloqueada. +${fmt(gold)} ouro e +${fmt(xp)} XP.`,'⚔','epic');
+        this.toast('✦ MINIBOSS VENCIDO! A fase 6 foi liberada!','epic');
+      }else if(kind==='boss'){
+        progress.bossDefeated=true;progress.cleared=true;progress.stage=10;progress.kills=10;
+        this.dropItem('epico');
+        this.addLog(`CHEFÃO ${name} DERROTADO! ${ZONES[s.zone].name} foi conquistada! +${fmt(gold)} ouro e +${fmt(xp)} XP.`,'◆','epic');
+        this.toast(`CHEFÃO DERROTADO! ${s.zone===ZONES.length-1?'Todas as regiões conquistadas!':'Nova região liberada!'}`,'epic');
+        travelNext=s.zone<ZONES.length-1;
+      }else{
+        if(!progress.cleared){
+          progress.kills++;
+          if(progress.kills===ENEMIES_PER_PHASE){
+            if(progress.stage===5){
+              this.addLog(`Os dez inimigos da fase 5 caíram. O MINIBOSS surgiu!`,'☠','rare');
+              this.toast('⚠ MINIBOSS — Uma criatura poderosa bloqueia o caminho!');
+            }else if(progress.stage===10){
+              this.addLog(`Os dez inimigos da fase 10 caíram. O CHEFÃO FINAL despertou!`,'☠','epic');
+              this.toast('⚠ CHEFÃO DA REGIÃO! Prepare seus golpes!','epic');
+            }else{
+              progress.stage++;progress.kills=0;
+              this.addLog(`FASE ${progress.stage} liberada em ${ZONES[s.zone].name}!`,'✦','good');
+            }
+          }
+        }
+        if(Math.random()<this.bonuses().drop)this.dropItem();
+        this.addLog(`${name} derrotado. +${fmt(gold)} ouro · +${fmt(xp)} XP.`,'⚔');
       }
       if(!s.event && now()-s.lastEventAt>17000 && Math.random()<(.029+s.skills.r3*.007))this.spawnEvent();
-      s.mob=freshMob(s);
-      if(this.tab==='inventory' || this.tab==='zones')this.renderPanel();
+      if(travelNext){
+        const previousZone=ZONES[s.zone].name;
+        s.zone++;
+        s.event=null;
+        s.nextEventAt=now()+this.nextEventDelay();
+        this.lastZoneRendered=-1;
+        this.addLog(`✧ ${previousZone} concluída. Você avançou para ${ZONES[s.zone].name}!`,'⚑','good');
+        this.toast(`REGIÃO ${ZONES[s.zone].rune} — ${ZONES[s.zone].name}`,'good');
+      }
+      s.mob=freshMob(s,defeated.name);
+      this.renderCore();
+      if(this.tab==='inventory'||this.tab==='zones')this.renderPanel();
     }
     nextEventDelay() {return Math.floor(randEventDelay()/(1+this.state.skills.r3*.14));}
     spawnEvent() {
@@ -711,7 +827,7 @@
     performAscension(gain) {
       const s=this.state;
       s.souls=add(s.souls,gain);
-      s.level=1;s.xp=0;s.gold=0;s.zone=0;s.zoneKills=Array(ZONES.length).fill(0);
+      s.level=1;s.xp=0;s.gold=0;s.zone=0;s.zoneKills=Array(ZONES.length).fill(0);s.zoneProgress=ZONES.map(freshProgress);
       s.upgrades=emptyRanks(UPGRADES);s.runKills=0;s.runGold=0;
       s.rebirths++;s.event=null;s.mob=freshMob(s);s.nextEventAt=now()+this.nextEventDelay();
       this.lastZoneRendered=-1;this.lastEventRendered='';
@@ -722,7 +838,7 @@
     }
     travelTo(z) {
       const index=validZone(z);
-      if(!unlockedZone(this.state,index)){this.toast(`Região bloqueada: requer nível ${ZONES[index].level} e ${ZONES[index].kills} abates.`);return;}
+      if(!unlockedZone(this.state,index)){this.toast(`Região bloqueada. Derrote o chefão da área anterior para entrar.`);return;}
       if(index===this.state.zone)return;
       this.state.zone=index;
       this.state.mob=freshMob(this.state);
@@ -778,13 +894,27 @@
       $('rebirths').textContent=fmt(s.rebirths);
       $('runStatus').textContent=`JORNADA ${this.roman(Math.min(30,s.rebirths+1))}`;
       $('currentZoneShort').textContent=ZONES[s.zone].rune;
+      const phase=progressAt(s),bossKind=s.mob.kind;
       $('mobName').textContent=s.mob.name;
-      $('mobLevel').textContent=`Nv. ${fmt(s.mob.level)}`;
+      $('monsterArt').dataset.variant=String(ZONES[s.zone].names.indexOf(s.mob.name));
+      $('mobLevel').textContent=bossKind==='boss'?'☠ CHEFÃO':bossKind==='miniboss'?'✦ MINIBOSS':`Nv. ${fmt(s.mob.level)}`;
+      $('battlefield').classList.toggle('boss-fight',bossKind==='boss');
+      $('battlefield').classList.toggle('miniboss-fight',bossKind==='miniboss');
+      $('stageNumber').textContent=`FASE ${phase.stage} / 10`;
+      $('stageKills').textContent=phase.cleared?'REGIÃO CONQUISTADA':bossKind==='boss'?'CHEFÃO FINAL':bossKind==='miniboss'?'MINIBOSS':`${phase.kills} / 10 INIMIGOS`;
+      $('stageProgressFill').style.width=`${phase.cleared?100:phase.kills*10}%`;
+      $('stageProgressTrack').setAttribute('aria-valuenow',String(phase.cleared?100:phase.kills*10));
+      for(const bar of $('stagePips').children){
+        const n=Number(bar.dataset.stage);
+        bar.classList.toggle('completed',phase.cleared||n<phase.stage);
+        bar.classList.toggle('active',!phase.cleared&&n===phase.stage);
+      }
       $('intelMob').textContent=s.mob.name;
       $('mobHPText').textContent=`${fmt(Math.ceil(s.mob.hp))} / ${fmt(s.mob.maxHp)}`;
       $('mobHPFill').style.width=`${Math.max(0,Math.min(100,100*s.mob.hp/Math.max(1,s.mob.maxHp)))}%`;
-      $('zoneKillsLabel').textContent=`${fmt(s.zoneKills[s.zone])} ABATES NESTA ZONA`;
-      $('intelReward').textContent=`+${fmt(Math.floor(rewardGold(s)*b.gold))} ouro · +${fmt(rewardXp(s))} XP`;
+      $('zoneKillsLabel').textContent=`${fmt(s.zoneKills[s.zone])} ABATES · FASE ${phase.stage}/10`;
+      const rewardScale=bossKind==='boss'?18:bossKind==='miniboss'?7:1;
+      $('intelReward').textContent=`+${fmt(Math.floor(multiply(rewardGold(s),rewardScale)*b.gold))} ouro · +${fmt(Math.floor(rewardXp(s)*(bossKind==='boss'?14:bossKind==='miniboss'?6:1)))} XP`;
       $('dropChance').textContent=fmtPercent(b.drop);
       $('goldBonus').textContent=`+${fmtPercent(b.gold-1)}`;
       $('prestigePreview').textContent=fmt(this.previewPrestige());
@@ -798,17 +928,21 @@
       return result;
     }
     renderMilestone() {
-      const s=this.state;
-      const next=ZONES.findIndex((z,i)=>i>s.zone && !unlockedZone(s,i));
-      const nextZone=next===-1?null:ZONES[next];
-      if(!nextZone){
-        $('milestoneTitle').textContent='A escuridão conhece seu nome';
-        $('milestoneDescription').textContent='Todas as regiões estão acessíveis. A ascensão trará um poder ainda maior.';
-        return;
+      const s=this.state,p=progressAt(s),z=ZONES[s.zone];
+      if(p.cleared){
+        $('milestoneTitle').textContent='Região conquistada!';
+        $('milestoneDescription').textContent=s.zone===ZONES.length-1?'O Imperador caiu. Todas as seis regiões foram conquistadas!':'Você venceu o chefão! A próxima região foi liberada. Volte às regiões anteriores quando quiser.';
+      }else if(s.mob.kind==='miniboss'){
+        $('milestoneTitle').textContent=`✦ MINIBOSS: ${z.miniboss}`;
+        $('milestoneDescription').textContent='Derrote o guardião da fase 5 para avançar à fase 6. É obrigatório vencê-lo.';
+      }else if(s.mob.kind==='boss'){
+        $('milestoneTitle').textContent=`☠ CHEFÃO: ${z.boss}`;
+        $('milestoneDescription').textContent='A vitória abre a próxima região automaticamente. Não é possível ignorar o chefão.';
+      }else{
+        const remaining=ENEMIES_PER_PHASE-p.kills;
+        $('milestoneTitle').textContent=`Fase ${p.stage} · ${z.name}`;
+        $('milestoneDescription').textContent=`Faltam ${remaining} inimigo${remaining===1?'':'s'} para ${p.stage===5?'desafiar o miniboss':p.stage===10?'desafiar o chefão':`chegar à fase ${p.stage+1}`}.`;
       }
-      const remainingKills=Math.max(0,nextZone.kills-s.runKills),remainingLevels=Math.max(0,nextZone.level-s.level);
-      $('milestoneTitle').textContent=`Próximo destino: ${nextZone.name}`;
-      $('milestoneDescription').textContent=`Requer nível ${nextZone.level} e ${fmt(nextZone.kills)} abates · faltam ${remainingLevels} níveis e ${fmt(remainingKills)} abates.`;
     }
     renderEvent() {
       const e=this.state?.event,overlay=$('eventOverlay');
@@ -884,10 +1018,12 @@
     }
     renderZones() {
       const s=this.state;
-      return `<div class="section-headline"><div><h2>Mapa das Terras Perdidas</h2><p>O caminho se abre com experiência e vitórias. Cada região oferece mais ouro, XP e inimigos resistentes.</p></div></div><div class="zone-grid">${ZONES.map((z,index)=>{
-        const unlocked=unlockedZone(s,index),current=index===s.zone;
-        const gate=unlocked?`${fmt(s.zoneKills[index])} abates nesta região`:`Requer nv. ${z.level} · ${fmt(z.kills)} abates`;
-        return `<article class="zone-card ${current?'current':''} ${!unlocked?'locked':''}"><div class="zone-index">${unlocked?'✧':'♜'} &nbsp; REGIÃO ${z.rune}</div><h3>${esc(z.name)}</h3><p>${esc(z.subtitle)}</p><div class="zone-requirement">${gate}</div><button type="button" data-travel="${index}" ${!unlocked||current?'disabled':''}>${current?'ATUAL':unlocked?'VIAJAR':'BLOQUEADA'}</button></article>`;
+      return `<div class="section-headline"><div><h2>Mapa das Terras Perdidas</h2><p>Cada região possui 10 fases. Derrote 10 criaturas por fase; vença o miniboss da fase 5 e o chefão da fase 10 para liberar o próximo território.</p></div></div><div class="zone-grid">${ZONES.map((z,index)=>{
+        const unlocked=unlockedZone(s,index),current=index===s.zone,p=s.zoneProgress[index];
+        const gate=!unlocked?'Derrote o chefão da região anterior':p.cleared?'✦ REGIÃO CONQUISTADA':`FASE ${p.stage}/10 · ${p.kills}/10 INIMIGOS`;
+        const progressPercent=p.cleared?100:((p.stage-1)*10+p.kills)*100/100;
+        const bossNote=p.cleared?'Chefão derrotado':p.stage===5&&!p.minibossDefeated?'✦ Miniboss na fase 5':p.stage===10?'☠ Chefão na fase 10':'Miniboss F5 · Chefão F10';
+        return `<article class="zone-card ${current?'current':''} ${!unlocked?'locked':''} ${p.cleared?'cleared':''}"><div class="zone-index">${p.cleared?'◆':unlocked?'✧':'♜'} &nbsp; REGIÃO ${z.rune}</div><h3>${esc(z.name)}</h3><p>${esc(z.subtitle)}</p><div class="zone-requirement">${gate}</div><div class="zone-progress-track"><span style="width:${progressPercent}%"></span></div><div class="zone-boss-note">${bossNote}</div><button type="button" data-travel="${index}" ${!unlocked||current?'disabled':''}>${current?'ATUAL':unlocked?'VIAJAR':'BLOQUEADA'}</button></article>`;
       }).join('')}</div>`;
     }
     renderAscension() {

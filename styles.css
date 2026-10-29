@@ -9,3 +9,45 @@
 
 .event-illustration{width:66px;height:67px;display:grid;place-items:center}.event-illustration svg{width:100%;height:100%;filter:drop-shadow(0 0 5px #ffd273)}
 @media(max-width:520px){.event-illustration{width:48px;height:49px}}
+
+/* v2 — Diário com altura estritamente limitada e rolagem interna */
+.log-panel{flex:none;display:flex;flex-direction:column;height:318px;max-height:318px;min-height:0;overflow:hidden}
+.log-panel .log-heading,.log-panel .log-footer{flex:0 0 auto}
+.log-panel .combat-log{flex:1 1 auto;min-height:0;height:0;max-height:none;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;scrollbar-width:thin;scrollbar-color:#af864e #251d16}
+.log-panel .combat-log::-webkit-scrollbar{width:7px}
+.log-panel .combat-log::-webkit-scrollbar-thumb{background:#af864e;border-radius:5px;border:1px solid #2f2419}
+.log-panel .combat-log::-webkit-scrollbar-track{background:#251d16}
+.log-panel .log-footer{font-size:8px;letter-spacing:.5px}
+/* Dez fases de combate com checkpoints obrigatórios */
+.stage-strip{padding:12px 20px 13px;background:linear-gradient(100deg,#31271d,#1c1915);border-top:1px solid #4a3825;border-bottom:1px solid #796041}
+.stage-caption{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:10px;color:#aa9578;letter-spacing:1.2px}
+.stage-caption strong{font:700 14px var(--serif);color:#edc47d;letter-spacing:1px}
+.stage-progress-track{height:5px;background:#120f0c;border:1px solid #594731;margin:8px 0 10px;overflow:hidden}
+.stage-progress-track span{display:block;height:100%;background:linear-gradient(90deg,#a97d42,#eed18b);transition:width .18s linear;width:0}
+.stage-pips{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.stage-pips span{min-width:0;text-align:center;color:#786955;border:1px solid #46392b;background:#191512;padding:4px 0;font-size:10px;line-height:1.1;font-weight:700}
+.stage-pips .miniboss-pip{border-color:#7f4e60;color:#bf92a1}
+.stage-pips .boss-pip{border-color:#a67738;color:#f1bf6b}
+.stage-pips .completed{background:#53452b;border-color:#b28e56;color:#eed8a6}
+.stage-pips .active{background:#8b6031;border-color:#f7d497;color:#fff0c9;box-shadow:0 0 10px #d79a445c}
+.battlefield.miniboss-fight .monster-aura{filter:hue-rotate(220deg) brightness(1.5);opacity:.9}
+.battlefield.boss-fight .monster-aura{filter:hue-rotate(330deg) brightness(1.8);opacity:1}
+.battlefield.miniboss-fight .monster-art{filter:drop-shadow(0 0 18px #bb83cb) drop-shadow(0 5px 7px #09080a);transform:scale(1.12)}
+.battlefield.boss-fight .monster-art{filter:drop-shadow(0 0 24px #e2634b) drop-shadow(0 6px 9px #09080a);transform:scale(1.19)}
+.battlefield.boss-fight .hp-track{border-color:#e49c55;box-shadow:0 0 11px #d2754273}
+.battlefield.boss-fight .hp-fill{background:linear-gradient(90deg,#9f2832,#e4533e)}
+.battlefield.miniboss-fight .hp-fill{background:linear-gradient(90deg,#68376b,#ad6eb2)}
+.battlefield.boss-fight .mob-rank,.battlefield.miniboss-fight .mob-rank{color:#fff0bd;border-color:#d6a459;background:#51311e}
+.zone-progress-track{height:5px;background:#130f0d;border:1px solid #5e4831;margin:10px 0 6px;overflow:hidden}
+.zone-progress-track span{display:block;height:100%;background:linear-gradient(90deg,#8a6337,#dcb36e)}
+.zone-boss-note{font-size:9px;color:#a99070;letter-spacing:.2px;margin-bottom:12px}
+.zone-card.cleared{border-color:#8d7949}
+@media(max-width:720px){.log-panel{height:292px;max-height:292px;min-height:0}.log-panel .combat-log{height:0;min-height:0}.stage-strip{padding:10px 13px}.stage-pips{gap:3px}}
+@media(max-width:520px){.log-panel{height:282px;max-height:282px}.log-panel .combat-log{height:0;min-height:0}.stage-caption strong{font-size:13px}.stage-pips span{padding:5px 0;font-size:9px}}
+
+/* Variações visuais entre as cinco criaturas de cada região. */
+.monster-art[data-variant="0"] svg{filter:brightness(1.02)}
+.monster-art[data-variant="1"] svg{filter:sepia(.45) hue-rotate(48deg) brightness(.88);transform:scale(.93) rotate(-3deg)}
+.monster-art[data-variant="2"] svg{filter:sepia(.36) hue-rotate(155deg) brightness(1.15);transform:scale(1.08) rotate(3deg)}
+.monster-art[data-variant="3"] svg{filter:sepia(.7) hue-rotate(290deg) saturate(1.4);transform:scale(.91)}
+.monster-art[data-variant="4"] svg{filter:sepia(.35) hue-rotate(75deg) contrast(1.2);transform:scale(1.04) rotate(-2deg)}
