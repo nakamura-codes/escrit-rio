@@ -6,8 +6,10 @@
   <meta name="theme-color" content="#15120f">
   <meta name="description" content="Hellward — RPG idle de fantasia sombria. Evolua, conquiste tesouros e renasça mais forte.">
   <title>Hellward · Idle RPG</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="game.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=7.0">
+  <script src="item-catalog.js?v=7.0" defer></script>
+  <script src="game.js?v=7.0" defer></script>
+  <script src="parallax.js?v=7.2" defer></script>
 </head>
 <body>
   <div class="ambient-grain" aria-hidden="true"></div>
@@ -31,14 +33,21 @@
       <aside class="left-column">
         <section class="panel adventurer-panel">
           <div class="panel-label"><span class="panel-ornament">✧</span> CRÔNICAS DO AVENTUREIRO <span class="panel-ornament">✧</span></div>
-          <div class="hero-portrait"><div class="hero-circle"></div><svg class="hero-icon" viewBox="0 0 180 180" fill="none" aria-hidden="true"><path d="m48 151 10-35 33-18 34 18 10 35" fill="#31251e" stroke="#876746" stroke-width="3"/><path d="m60 56 30-32 30 32-10 47-20 14-20-14-10-47Z" fill="#463a30" stroke="#b18a58" stroke-width="3"/><path d="M66 62 90 41l24 21-8 31-16 13-16-13-8-31Z" fill="#161c20" stroke="#a9875d" stroke-width="2"/><path d="m74 78 16 4 16-4" stroke="#d4a756" stroke-width="3"/><path d="m76 31 14-19 14 19M57 56l-18 18 20 2m62-20 18 18-20 2" fill="#a6804f" stroke="#dfb873" stroke-width="3"/><path d="m42 142 28-24 20 24 20-24 28 24" stroke="#9d794f" stroke-width="4"/><path d="m90 114-8 22 8 15 8-15-8-22Z" fill="#c99846"/></svg><div class="portrait-caption">O ERRANTE</div></div>
+          <div class="hero-portrait"><div class="hero-circle"></div><img src="assets/hero/cavaleiro-hellward.png" class="hero-new-portrait" alt="Cavaleiro de Hellward" draggable="false"><div class="portrait-caption">O ERRANTE</div></div>
           <div class="hero-level-line"><span>NÍVEL <strong id="levelValue">1</strong></span><span id="xpLabel">0 / 24 XP</span></div>
           <div class="progress-bar xp-track" role="progressbar" aria-label="Experiência" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="xpProgress"><div class="progress-fill xp-fill" id="xpFill"></div></div>
+          <div class="hero-health-panel" aria-label="Vida do herói">
+            <div class="hero-health-line"><strong>♥ VIDA DO ERRANTE</strong><strong id="heroHPText">110 / 110 HP</strong></div>
+            <div class="hero-health-track"><span id="heroHPFill" style="width:100%"></span></div>
+            <div class="hero-health-footer">REGENERAÇÃO <strong id="heroRegeneration">+0,8/s</strong></div>
+          </div>
           <div class="hero-stat-grid">
             <div class="stat-tile"><small>GOLPE</small><strong id="clickStat">2</strong><span>por clique</span></div>
             <div class="stat-tile"><small>RITUAL</small><strong id="dpsStat">0</strong><span>por segundo</span></div>
             <div class="stat-tile"><small>CRÍTICO</small><strong id="critStat">8%</strong><span>chance</span></div>
             <div class="stat-tile"><small>FORTUNA</small><strong id="luckStat">0%</strong><span>sorte</span></div>
+            <div class="stat-tile"><small>VIDA MÁX.</small><strong id="hpStat">110</strong><span>sobrevivência</span></div>
+            <div class="stat-tile"><small>DEFESA</small><strong id="defenseStat">3</strong><span>redução de dano</span></div>
           </div>
           <div class="hero-footer"><span class="footer-rune">ᛟ</span><span>Todo poder tem seu preço.</span><span class="footer-rune">ᛟ</span></div>
         </section>
@@ -50,20 +59,27 @@
           <div class="battle-top"><div><div class="eyebrow gold-eyebrow">✦ &nbsp; EXPEDIÇÃO ATUAL &nbsp; ✦</div><h1 id="zoneName">Campos de Cinza</h1><p id="zoneSubtitle">Onde os primeiros condenados despertam.</p></div><div class="zone-crest" id="zoneCrest" aria-hidden="true">I</div></div>
           <div class="stage-strip" aria-label="Progressão da região"><div class="stage-caption"><strong id="stageNumber">FASE 1 / 10</strong><span id="stageKills">0 / 10 INIMIGOS</span></div><div class="stage-progress-track" id="stageProgressTrack" role="progressbar" aria-label="Inimigos da fase" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="stageProgressFill"></span></div><div class="stage-pips" id="stagePips"><span data-stage="1" class="active" title="Fase 1">1</span><span data-stage="2" title="Fase 2">2</span><span data-stage="3" title="Fase 3">3</span><span data-stage="4" title="Fase 4">4</span><span data-stage="5" class="miniboss-pip" title="Fase 5 · Miniboss">5</span><span data-stage="6" title="Fase 6">6</span><span data-stage="7" title="Fase 7">7</span><span data-stage="8" title="Fase 8">8</span><span data-stage="9" title="Fase 9">9</span><span data-stage="10" class="boss-pip" title="Fase 10 · Chefão">10</span></div></div>
           <div class="battlefield zone-0" id="battlefield">
-            <div class="scene-sky"></div><div class="scene-moon"></div><div class="scene-back-mountain left"></div><div class="scene-back-mountain right"></div><div class="scene-ruin ruin-left"></div><div class="scene-ruin ruin-right"></div><div class="scene-floor"></div><div class="scene-mist mist-one"></div><div class="scene-mist mist-two"></div><div class="scene-ember ember-1"></div><div class="scene-ember ember-2"></div><div class="scene-ember ember-3"></div>
+            <div class="parallax-world" aria-hidden="true"><div class="parallax-layer p-far" data-depth="0.14"></div><div class="parallax-layer p-mid" data-depth="0.36"></div><div class="parallax-layer p-ground" data-depth="0.58"></div></div>
+            <div class="camera-state" id="cameraState" aria-hidden="true">COMBATE • 2D</div>
+            <div class="combat-hero" id="combatHero" aria-hidden="true"><span class="hero-ground-shadow"></span><img src="assets/hero/cavaleiro-hellward.png" alt="" class="combat-hero-sprite" width="176" height="242" draggable="false"><span class="hero-ground-name">O ERRANTE</span></div>
+            <span class="duel-slash" id="duelSlash" aria-hidden="true"></span>
+            <div class="hero-arena-hp" aria-hidden="true"><span>♥ ERRANTE</span><div><i id="arenaHPFill"></i></div></div>
+            <div class="hero-damage-layer" id="heroDamageLayer" aria-hidden="true"></div>
+            <div class="hero-respawn" id="heroRespawn" hidden><strong>☠ VOCÊ FOI DERROTADO</strong><span>Retornando em <b id="heroRespawnTime">8s</b></span><small>O inimigo recuperou a vida. Seus itens e fases foram preservados.</small></div>
             <div class="mob-info"><div class="mob-name-row"><span class="mob-icon">☠</span><strong id="mobName">Condenado</strong><span class="mob-rank" id="mobLevel">Nv. 1</span></div><div class="progress-bar hp-track"><div class="progress-fill hp-fill" id="mobHPFill"></div><span class="hp-numbers" id="mobHPText">30 / 30</span></div></div>
             <button id="attackTarget" class="attack-target" type="button" aria-label="Atacar inimigo"><span class="monster-aura"></span><span class="mob-shadow"></span><span class="monster-art" id="monsterArt" aria-hidden="true"></span><span class="target-hint">✥ CLIQUE PARA ATACAR ✥</span></button>
+            <div class="parallax-front" aria-hidden="true"><div class="parallax-layer p-foreground" data-depth="0.85"></div><div class="parallax-layer p-atmosphere" data-depth="1"></div></div>
             <div class="event-overlay" id="eventOverlay" hidden><div class="event-ribbon">✦ EVENTO RARO ✦</div><button class="event-button" id="eventTarget" type="button"><span class="event-illustration" id="eventArt" aria-hidden="true">♜</span><span class="event-title" id="eventTitle">Goblin do Tesouro</span><span class="event-instruction">CLIQUE PARA SAQUEAR</span><div class="event-progress-track"><span id="eventHPFill"></span></div><span class="event-clock">⏳ <b id="eventTime">10.0s</b></span></button></div>
             <div class="damage-layer" id="damageLayer" aria-hidden="true"></div>
             <div class="battle-corner tl"></div><div class="battle-corner tr"></div><div class="battle-corner bl"></div><div class="battle-corner br"></div>
           </div>
-          <div class="battle-bottom"><span class="battle-instruction">⚔ &nbsp; ATAQUE O INIMIGO OU DEIXE SEUS RITUAIS AGIREM</span><span class="battle-kill-count" id="zoneKillsLabel">0 ABATES NESTA ZONA</span></div>
+            <div class="battle-bottom"><span class="battle-instruction">⚔ &nbsp; INIMIGOS CONTRA-ATACAM · EVOLUA DEFESA E USE POÇÕES</span><span class="battle-kill-count" id="zoneKillsLabel">0 ABATES NESTA ZONA</span></div>
         </section>
         <section class="milestone-banner" id="milestoneBanner"><div class="milestone-symbol">♜</div><div><strong id="milestoneTitle">O caminho começa aqui</strong><p id="milestoneDescription">Derrote 10 inimigos por fase; elimine o miniboss na fase 5 e o chefão na fase 10 para avançar.</p></div><span class="milestone-arrow">❯</span></section>
       </section>
 
       <aside class="right-column">
-        <section class="panel intel-panel"><div class="panel-heading"><div><div class="eyebrow">O CÓDICE SOMBRIO</div><h2>Visão da Batalha</h2></div><span class="heading-glyph">☽</span></div><div class="intel-block"><div class="intel-symbol">♢</div><div><small>INIMIGO ATUAL</small><strong id="intelMob">Condenado</strong><span id="intelReward">+12 ouro · +9 XP</span></div></div><div class="ornate-divider">✧</div><div class="intel-chance"><span>Chance de equipamento</span><strong id="dropChance">18%</strong></div><div class="intel-chance"><span>Bônus de ouro</span><strong id="goldBonus">+0%</strong></div><div class="intel-chance"><span>Almas ao renascer</span><strong id="prestigePreview">0</strong></div><div class="mini-tip">✦ &nbsp; Goblins e baús surgem durante o combate. Derrote-os antes que desapareçam!</div></section>
+        <section class="panel intel-panel"><div class="panel-heading"><div><div class="eyebrow">O CÓDICE SOMBRIO</div><h2>Visão da Batalha</h2></div><span class="heading-glyph">☽</span></div><div class="intel-block"><div class="intel-symbol">♢</div><div><small>INIMIGO ATUAL</small><strong id="intelMob">Condenado</strong><span id="intelReward">+12 ouro · +9 XP</span></div></div><div class="ornate-divider">✧</div><div class="intel-chance"><span>Chance de equipamento</span><strong id="dropChance">18%</strong></div><div class="intel-chance"><span>Próximo ataque inimigo</span><strong id="enemyAttackCountdown">2.8s</strong></div><div class="intel-chance"><span>Dano por golpe recebido</span><strong id="enemyDamage">5</strong></div><div class="intel-chance"><span>Bônus de ouro</span><strong id="goldBonus">+0%</strong></div><div class="intel-chance"><span>Almas ao renascer</span><strong id="prestigePreview">0</strong></div><div class="mini-tip">✦ &nbsp; Goblins e baús surgem durante o combate. Derrote-os antes que desapareçam!</div></section>
         <section class="panel log-panel"><div class="panel-heading log-heading"><div><div class="eyebrow">SUSSURROS DO ABISMO</div><h2>Registro de Combate</h2></div><span class="live-indicator"><span></span> AO VIVO</span></div><div class="combat-log" id="combatLog" role="log" aria-live="off"></div><div class="log-footer">ROLE O MOUSE PARA VER OS REGISTROS ANTERIORES <span>↕</span></div></section>
       </aside>
     </main>
