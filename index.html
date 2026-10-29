@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#15120f">
-  <meta name="description" content="Cinzas do Crepúsculo — RPG idle de fantasia sombria. Evolua, conquiste tesouros e renasça mais forte.">
-  <title>Cinzas do Crepúsculo · Idle RPG</title>
+  <meta name="description" content="Hellward — RPG idle de fantasia sombria. Evolua, conquiste tesouros e renasça mais forte.">
+  <title>Hellward · Idle RPG</title>
   <link rel="stylesheet" href="styles.css">
   <script src="game.js" defer></script>
 </head>
@@ -15,7 +15,7 @@
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M32 3 55 14v24L32 61 9 38V14L32 3Z" stroke="currentColor" stroke-width="2"/><path d="M32 12 43 26l-11 24-11-24 11-14Z" fill="currentColor" opacity=".9"/><path d="M32 12v38M21 26h22" stroke="#24150c" stroke-width="2"/></svg></div>
-        <div><div class="brand-eyebrow">UM IDLE RPG DE FANTASIA SOMBRIA</div><div class="brand-name">CINZAS <span>DO</span> CREPÚSCULO</div></div>
+        <div><div class="brand-eyebrow">UM IDLE RPG DE FANTASIA SOMBRIA</div><div class="brand-name">HELLWARD</div></div>
       </div>
       <div class="top-resources">
         <div class="resource-pill"><div class="resource-icon coin">✦</div><div><small>OURO</small><strong id="goldValue">0</strong></div></div>
@@ -25,7 +25,7 @@
       <button class="profile-button" id="switchProfile" type="button" title="Trocar perfil"><span class="profile-avatar" aria-hidden="true">♜</span><span class="profile-copy"><small>AVENTUREIRO</small><strong id="profileName">—</strong></span><span class="profile-chevron">⌄</span></button>
     </header>
 
-    <div class="underbar"><div class="underbar-left"><span class="status-dot"></span><span>O CREPÚSCULO NÃO DESCANSA</span><span class="divider-dot">✧</span><span id="runStatus">JORNADA I</span></div><div class="underbar-right">SALVAMENTO AUTOMÁTICO <span class="autosave-indicator" id="saveIndicator">●</span></div></div>
+    <div class="underbar"><div class="underbar-left"><span class="status-dot"></span><span>O ABISMO NÃO DESCANSA</span><span class="divider-dot">✧</span><span id="runStatus">JORNADA I</span></div><div class="underbar-right">SALVAMENTO AUTOMÁTICO <span class="autosave-indicator" id="saveIndicator">●</span></div></div>
 
     <main class="game-layout">
       <aside class="left-column">
@@ -77,10 +77,10 @@
       </nav>
       <div class="tab-body" id="tabBody" aria-live="polite"></div>
     </section>
-    <footer class="site-footer"><span>✧ CINZAS DO CREPÚSCULO · EDIÇÃO ETERNA</span><span>JOGO LOCAL · SEM SERVIDOR · SALVO NO SEU NAVEGADOR</span><div class="footer-buttons"><button type="button" id="exportSave">↓ EXPORTAR JSON</button><button type="button" id="importSave">↑ IMPORTAR JSON</button></div></footer>
+    <footer class="site-footer"><span>✧ HELLWARD · EDIÇÃO ETERNA</span><span>JOGO LOCAL · SEM SERVIDOR · SALVO NO SEU NAVEGADOR</span><div class="footer-buttons"><button type="button" id="exportSave">↓ EXPORTAR JSON</button><button type="button" id="importSave">↑ IMPORTAR JSON</button></div></footer>
   </div>
 
-  <div class="auth-screen" id="authScreen" role="dialog" aria-modal="true" aria-labelledby="authTitle"><div class="auth-glow"></div><div class="auth-card"><div class="auth-sigil">✥</div><div class="auth-overline">UM MUNDO ESQUECIDO AGUARDA</div><h1 id="authTitle">Cinzas do <em>Crepúsculo</em></h1><p>Forje sua lenda. Desafie a escuridão. Renasça além da morte.</p><div class="auth-divider"><span>✧</span></div><form id="createProfileForm"><label for="newProfileName">NOME DO AVENTUREIRO</label><div class="auth-create-row"><input id="newProfileName" name="name" maxlength="18" autocomplete="off" placeholder="Como será chamada sua lenda?" required><button type="submit" class="primary-button">INICIAR JORNADA ↗</button></div></form><div class="auth-saved" id="savedProfiles" hidden><div class="saved-heading">OU CONTINUE SUA JORNADA</div><div id="profileList" class="profile-list"></div></div><div class="auth-bottom"><span>Os seus dados permanecem neste dispositivo.</span><button type="button" id="importFromAuth">IMPORTAR UM SAVE ↥</button></div></div><div class="auth-footnote">✦ &nbsp; NENHUMA CONTA ONLINE OU SENHA NECESSÁRIA &nbsp; ✦</div></div>
+  <div class="auth-screen" id="authScreen" role="dialog" aria-modal="true" aria-labelledby="authTitle"><div class="auth-glow"></div><div class="auth-card"><div class="auth-sigil">✥</div><div class="auth-overline">UM MUNDO ESQUECIDO AGUARDA</div><h1 id="authTitle"><em>Hellward</em></h1><p>Forje sua lenda. Desafie a escuridão. Renasça além da morte.</p><div class="auth-divider"><span>✧</span></div><form id="createProfileForm"><label for="newProfileName">NOME DO AVENTUREIRO</label><div class="auth-create-row"><input id="newProfileName" name="name" maxlength="18" autocomplete="off" placeholder="Como será chamada sua lenda?" required><button type="submit" class="primary-button">INICIAR JORNADA ↗</button></div></form><div class="auth-saved" id="savedProfiles" hidden><div class="saved-heading">OU CONTINUE SUA JORNADA</div><div id="profileList" class="profile-list"></div></div><div class="auth-bottom"><span>Os seus dados permanecem neste dispositivo.</span><button type="button" id="importFromAuth">IMPORTAR UM SAVE ↥</button></div></div><div class="auth-footnote">✦ &nbsp; NENHUMA CONTA ONLINE OU SENHA NECESSÁRIA &nbsp; ✦</div></div>
   <div class="modal-backdrop" id="dialogBackdrop" hidden><section class="dialog panel" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><div class="dialog-icon" id="dialogIcon">✦</div><div class="eyebrow" id="dialogEyebrow">CRÔNICA</div><h2 id="dialogTitle">A jornada continua</h2><p id="dialogText"></p><div class="dialog-actions" id="dialogActions"></div></section></div>
   <div class="toast-stack" id="toastStack" role="status" aria-live="polite"></div>
   <input type="file" id="saveFileInput" accept=".json,application/json" hidden>

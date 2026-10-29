@@ -1,4 +1,4 @@
-/* CINZAS DO CREPÚSCULO | Vanilla JS | GitHub Pages / file:// compatible.
+/* HELLWARD | Vanilla JS | GitHub Pages / file:// compatible.
    All game data is embedded locally; no dependencies, network requests or backend. */
 (() => {
   'use strict';
@@ -27,12 +27,12 @@
     {id: 'lendario', label: 'Lendário', multiplier: 5}
   ];
   const ZONES = [
-    {name: 'Campos de Cinza', subtitle: 'Onde os primeiros condenados despertam.', names: ['Condenado Errante', 'Devorador de Ossos', 'Sentinela Caída', 'Arqueiro Macabro', 'Coveiro Corrompido'], miniboss:'Carrasco das Cinzas', boss:'Rei dos Ossos', level: 1, kills: 0, rune: 'I', art: 'skeleton'},
-    {name: 'Bosque Profanado', subtitle: 'Raízes antigas escondem fome e maldição.', names: ['Fera Espinhosa', 'Rastejante Pútrido', 'Lobo da Praga', 'Entorpecido de Musgo', 'Caçador Silvestre'], miniboss:'Matriarca da Peste', boss:'Guardião do Bosque Morto', level: 5, kills: 20, rune: 'II', art: 'beast'},
-    {name: 'Criptas Afogadas', subtitle: 'Os ecos dos esquecidos nunca se calam.', names: ['Espectro da Cripta', 'Alma Enregelada', 'Lamento Submerso', 'Afogado Sem Rosto', 'Sacerdote Esquecido'], miniboss:'Pranteadora Abissal', boss:'Senhor das Criptas', level: 12, kills: 65, rune: 'III', art: 'wraith'},
-    {name: 'Fortaleza de Ferro', subtitle: 'O aço morto ainda guarda seus segredos.', names: ['Golem Ferrugem', 'Carcereiro Rúnico', 'Guardião de Basalto', 'Espadachim Oco', 'Construto Enferrujado'], miniboss:'Sentinela de Ferro Negro', boss:'Colosso da Fortaleza', level: 23, kills: 150, rune: 'IV', art: 'golem'},
-    {name: 'Fendas Infernais', subtitle: 'Onde os pactos são escritos em brasas.', names: ['Arauto das Chamas', 'Demônio Carmesim', 'Flagelo Abissal', 'Súcubo das Cinzas', 'Sombra Incandescente'], miniboss:'Duque das Brasas', boss:'Suserano Infernal', level: 38, kills: 300, rune: 'V', art: 'demon'},
-    {name: 'Trono do Crepúsculo', subtitle: 'O fim de toda luz. O início de outra era.', names: ['Lich Imortal', 'Rei das Sombras', 'Devorador de Estrelas', 'Sacerdote do Vazio', 'Arauto do Eclipse'], miniboss:'Arauto do Fim', boss:'Imperador do Crepúsculo', level: 60, kills: 600, rune: 'VI', art: 'lich'}
+    {name: 'Campos de Cinza', subtitle: 'Onde os primeiros condenados despertam.', names: ['Condenado Errante', 'Guerreiro Esquelético', 'Sentinela Caída', 'Arqueiro Macabro', 'Zumbi Errante'], miniboss:'Espadachim Corrompido', boss:'Cavaleiro Decapitado', level: 1, kills: 0, rune: 'I', art: 'skeleton'},
+    {name: 'Bosque Profanado', subtitle: 'Raízes antigas escondem fome e maldição.', names: ['Lobo Sombrio', 'Ratazana Pestilenta', 'Lobo da Praga', 'Entorpecido de Musgo', 'Goblin Selvagem'], miniboss:'Rei das Ratazanas', boss:'Hidra Profanada', level: 5, kills: 20, rune: 'II', art: 'beast'},
+    {name: 'Criptas Afogadas', subtitle: 'Os ecos dos esquecidos nunca se calam.', names: ['Espectro da Cripta', 'Alma Enregelada', 'Lamento Submerso', 'Afogado Sem Rosto', 'Sacerdote Esquecido'], miniboss:'Bruxa das Criptas', boss:'Rei Lich', level: 12, kills: 65, rune: 'III', art: 'wraith'},
+    {name: 'Fortaleza de Ferro', subtitle: 'O aço morto ainda guarda seus segredos.', names: ['Golem Ferrugem', 'Carcereiro Rúnico', 'Guardião de Basalto', 'Orc Carniceiro', 'Construto Enferrujado'], miniboss:'Ogro do Ferro', boss:'Cavaleiro do Abismo', level: 23, kills: 150, rune: 'IV', art: 'golem'},
+    {name: 'Fendas Infernais', subtitle: 'Onde os pactos são escritos em brasas.', names: ['Arauto das Chamas', 'Demônio Carmesim', 'Flagelo Abissal', 'Súcubo das Cinzas', 'Sombra Incandescente'], miniboss:'Devorador Mórbido', boss:'Dragão das Fendas', level: 38, kills: 300, rune: 'V', art: 'demon'},
+    {name: 'Trono do Crepúsculo', subtitle: 'O fim de toda luz. O início de outra era.', names: ['Lich Imortal', 'Rei das Sombras', 'Devorador de Estrelas', 'Sacerdote do Vazio', 'Arauto do Eclipse'], miniboss:'Medusa do Eclipse', boss:'Imperador do Crepúsculo', level: 60, kills: 600, rune: 'VI', art: 'lich'}
   ];
   const UPGRADES = [
     {id: 'strike', icon: '⚔', title: 'Lâmina Afiada', desc: 'Reforce os golpes para causar mais dano a cada clique.', base: 12, growth: 1.16, effect: '+2,4 dano por nível'},
@@ -67,14 +67,32 @@
   };
   const PREFIXES = {comum:['Gasto','Rústico','Esquecido'], incomum:['Temperado','Velado','Vigilante'], raro:['Rúnico','Sombrio','Venerável'], epico:['Espectral','Imperial','Profanado'], lendario:['Eterno','do Ocaso','da Última Aurora']};
 
-  const ART = {
-    skeleton: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bone" x2=".8" y2="1"><stop stop-color="#e3d1a9"/><stop offset="1" stop-color="#817b6f"/></linearGradient><linearGradient id="iron" x2="1" y2="1"><stop stop-color="#75756e"/><stop offset="1" stop-color="#2b3438"/></linearGradient></defs><path d="M85 109 52 132l-25 66 29 6 31-45M171 107l35 32 24 57-30 11-36-46" fill="#42413c" stroke="#1a191a" stroke-width="7"/><path d="m88 92-24 42 15 75 43 17 59-21 14-72-22-41Z" fill="url(#iron)" stroke="#191a1d" stroke-width="8"/><path d="m103 125 28 18 28-18-3 69-25 21-25-21Z" fill="#282d2d" stroke="#9d8768" stroke-width="4"/><path d="m101 91-17-22 13-45 27-14 36 14 13 45-18 22Z" fill="url(#bone)" stroke="#272b2d" stroke-width="6"/><path d="M96 63 114 54 122 72 102 79ZM165 63 147 54 139 72 159 79Z" fill="#1d1819"/><path d="M105 68h13m27 0h12" stroke="#eaa85f" stroke-width="4"/><path d="m130 70-9 17h18Z" fill="#3b3230"/><path d="M113 88v13m11-13v13m11-13v13m11-13v13" stroke="#55443b" stroke-width="5"/><path d="m82 204 3 44-20 28 47 1 15-56m47-17-3 44 22 28-47 1-17-56" fill="#45423c" stroke="#1b1d20" stroke-width="8"/><path d="m34 189-9 48 15 10 19-41m165-4 15 37-16 13-20-37" fill="url(#bone)" stroke="#292929" stroke-width="4"/><path d="M205 100 235 24 244 14 240 52l-22 77" fill="#a4b2b0" stroke="#1e2526" stroke-width="6"/><path d="m202 127 29 12" stroke="#b9945e" stroke-width="9"/></svg>`,
-    beast: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="beast" x2="1" y2="1"><stop stop-color="#828c68"/><stop offset="1" stop-color="#263a31"/></linearGradient></defs><path d="M47 192 19 158 8 94 46 124l23 38m144 38 31-46 6-63-36 42-24 37" fill="#394c34" stroke="#17251e" stroke-width="7"/><path d="M67 159 46 195l-12 71h42l23-68m95-37 23 40 11 64h-42l-24-72" fill="#3f5140" stroke="#19261f" stroke-width="8"/><path d="m47 103 17-53 31 35 25-19 20 22 25-22 25 22 29-35 15 56-24 100-70 39-71-41Z" fill="url(#beast)" stroke="#1c2a26" stroke-width="9"/><path d="m61 117 31-20 34 30-27 19Zm135 0-31-20-34 30 27 19Z" fill="#aece86" stroke="#213b2b" stroke-width="6"/><path d="M110 171 138 153 166 172l-29 30Z" fill="#171c19"/><path d="m108 203 18 30 12-28 13 28 16-30" fill="#ddd4b0" stroke="#26382a" stroke-width="5"/><path d="m77 87-34-57 4 72m129-15 32-57-3 73" stroke="#aeb796" stroke-width="10"/><path d="m39 266-17 20h67l-17-20m115 0-15 20h67l-17-20" fill="#9da584"/></svg>`,
-    wraith: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="shade" x2="1" y2="1"><stop stop-color="#6a84a2"/><stop offset="1" stop-color="#161b33"/></linearGradient></defs><path d="M123 13 64 48 40 111 45 206 19 274 62 257 91 281 126 256 158 287 194 253 244 276 208 205 218 111 186 48Z" fill="url(#shade)" stroke="#172130" stroke-width="9"/><path d="m126 25-48 45-9 66 58 42 65-42-15-66Z" fill="#111824" stroke="#9eadd0" stroke-width="4"/><path d="m87 109 28-12 10 18-29 14m78-20-29-12-10 18 29 14" fill="#a5d9f0"/><path d="m103 146 25 17 27-17" fill="none" stroke="#6997b5" stroke-width="6"/><path d="M57 132 13 173 31 201l39-36m118-33 59 37-18 32-46-33" stroke="#7c9cbb" stroke-width="17"/><path d="M59 218Q125 267 203 219" fill="none" stroke="#91bdd2" stroke-width="5" opacity=".45"/><circle cx="125" cy="118" r="82" stroke="#91c4d7" opacity=".13" stroke-width="6"/></svg>`,
-    golem: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rock" x2="1" y2="1"><stop stop-color="#a19583"/><stop offset="1" stop-color="#393e40"/></linearGradient></defs><path d="m38 112-30 37 4 72 38 10 36-75m133-44 30 37-4 72-38 10-36-75" fill="#585952" stroke="#252729" stroke-width="9"/><path d="M65 83 88 41h85l24 42 7 105-39 45H89l-38-45Z" fill="url(#rock)" stroke="#242a2a" stroke-width="10"/><path d="m84 54 22-37h48l22 37-11 64H95Z" fill="#666b68" stroke="#272b2a" stroke-width="8"/><path d="m94 77 26 4-8 14H92m75-18-27 4 9 14h20" fill="#ffc184" stroke="#493a2e" stroke-width="5"/><path d="m110 107 20 8 20-8-7 20h-27Z" fill="#29292c"/><path d="m89 136 39 21 43-21-12 62-29 18-29-18Z" fill="#4a4c49" stroke="#c5a26a" stroke-width="5"/><path d="m79 220-13 60h49l15-57m45-3 17 60h-49l-14-57" fill="#5d605d" stroke="#222526" stroke-width="9"/><path d="m8 220 12 37 39-2 3-29m186-6-12 37-39-2-3-29" fill="#77746e" stroke="#282a2b" stroke-width="6"/><path d="M130 143v49M100 164h60" stroke="#d69c67" stroke-width="5"/></svg>`,
-    demon: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hell" x2="1" y2="1"><stop stop-color="#aa5b47"/><stop offset="1" stop-color="#421d29"/></linearGradient></defs><path d="M79 123 9 50l18 84-23 72 78-28m98-55 70-73-18 84 23 72-78-28" fill="#5c2630" stroke="#23151d" stroke-width="8"/><path d="m87 80-35-55 6 69m115-14 34-55-6 69" fill="#c39c79" stroke="#38232a" stroke-width="6"/><path d="m70 98 35-65h52l35 65-12 110-50 31-49-31Z" fill="url(#hell)" stroke="#321b1d" stroke-width="9"/><path d="m90 107 30 7-5 19-26-9m81-17-30 7 5 19 26-9" fill="#ffbb68" stroke="#55261f" stroke-width="6"/><path d="m103 170 27-18 27 18-14 20h-25Z" fill="#2b171c"/><path d="m115 181 7 23 8-12 8 12 7-23" fill="#edc8a0"/><path d="m79 202-29 64h49l31-33m52-31 27 64h-49l-30-33" fill="#7b3432" stroke="#361b1e" stroke-width="8"/><path d="M64 130 25 181l15 21 44-29m112-43 39 51-15 21-44-29" stroke="#8c4641" stroke-width="16"/><path d="M43 206 22 219m194-13 21 13" stroke="#d8a17b" stroke-width="8"/></svg>`,
-    lich: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="king" x2="1" y2="1"><stop stop-color="#726186"/><stop offset="1" stop-color="#231b38"/></linearGradient></defs><path d="m70 76-14-64 35 32 35-42 35 42 42-32-12 64Z" fill="#b5a27a" stroke="#382f37" stroke-width="7"/><path d="m53 92 24-19 106 0 25 19-6 134 33 56-56-24-48 26-47-26-61 24 36-56Z" fill="url(#king)" stroke="#1b182d" stroke-width="8"/><path d="m90 79-10 47 14 39 36 20 36-20 15-39-11-47Z" fill="#b6b5af" stroke="#2c303b" stroke-width="7"/><path d="m91 115 27-8-5 24-24-6m81-10-27-8 5 24 24-6" fill="#c79bfa" stroke="#51415c" stroke-width="6"/><path d="m116 141 14 15 14-15m-30 20v12m11-12v12m11-12v12m11-12v12" stroke="#53495b" stroke-width="5"/><path d="M77 181 45 223l-25-18m161-24 32 42 25-18" fill="none" stroke="#8a7794" stroke-width="15"/><path d="M218 208V50m-21 11 21-31 21 31-21 25Z" fill="#ba9edb" stroke="#4b3a60" stroke-width="7"/><path d="M95 198 130 217 168 198l-36 54Z" fill="#3b304f" stroke="#b59bc3" stroke-width="5"/><circle cx="130" cy="210" r="9" fill="#caaff1"/></svg>`
+  // 42 creature slots: 17 unique custom PNGs + 25 individual SVGs (5 common, 1 miniboss, 1 boss per area).
+  // The names are intentionally indexed by the combat roster to eliminate shared art and hue swaps.
+  const MONSTER_SPRITES = [
+    ['condenado-errante', 'guerreiro-esqueletico.png', 'sentinela-caida', 'arqueiro-macabro', 'zumbi-errante.png', 'espadachim-corrompido.png', 'cavaleiro-decapitado.png'], 
+    ['lobo-sombrio.png', 'ratazana-pestilenta.png', 'lobo-da-praga', 'entorpecido-de-musgo', 'goblin-selvagem.png', 'rei-das-ratazanas.png', 'hidra-profanada.png'], 
+    ['espectro-da-cripta', 'alma-enregelada', 'lamento-submerso', 'afogado-sem-rosto', 'sacerdote-esquecido', 'bruxa-das-criptas.png', 'rei-lich.png'], 
+    ['golem-ferrugem', 'carcereiro-runico', 'guardiao-de-basalto', 'orc-carniceiro.png', 'construto-enferrujado', 'ogro-do-ferro.png', 'cavaleiro-do-abismo.png'], 
+    ['arauto-das-chamas', 'demonio-carmesim', 'flagelo-abissal', 'sucubo-das-cinzas', 'sombra-incandescente', 'devorador-morbido.png', 'dragao-das-fendas.png'], 
+    ['lich-imortal', 'rei-das-sombras', 'devorador-de-estrelas', 'sacerdote-do-vazio', 'arauto-do-eclipse', 'medusa-do-eclipse.png', 'imperador-do-crepusculo'], 
+  ];
+
+  // The custom illustrations are transparent PNGs; legacy creatures remain individual SVGs.
+  const monsterSrc = (zoneIndex, creatureIndex) => {
+    const slug = MONSTER_SPRITES[zoneIndex][creatureIndex];
+    return `assets/monsters/${slug.endsWith('.png') ? slug : slug + '.svg'}`;
   };
+
+  // Shape-specific movement: skeletons, beasts, spirits, constructs, and cosmic beings move differently.
+  const MONSTER_FAMILIES = [
+    ['humanoid', 'humanoid', 'humanoid', 'humanoid', 'humanoid', 'humanoid', 'humanoid'], 
+    ['quad', 'quad', 'quad', 'humanoid', 'humanoid', 'abomination', 'colossus'], 
+    ['wraith', 'wraith', 'wraith', 'drowned', 'wraith', 'wraith', 'humanoid'], 
+    ['colossus', 'humanoid', 'colossus', 'humanoid', 'colossus', 'colossus', 'humanoid'], 
+    ['humanoid', 'humanoid', 'arthropod', 'humanoid', 'wraith', 'abomination', 'colossus'], 
+    ['humanoid', 'humanoid', 'cosmic', 'wraith', 'cosmic', 'wraith', 'cosmic'], 
+  ];
 
   const EVENT_ART = {
     goblin: `<svg viewBox="0 0 85 78" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M19 33 3 19l17-1 11 14m35 1 16-14-18-1-10 14" fill="#88ac52" stroke="#314721" stroke-width="3"/><path d="M18 30Q20 8 42 7q25 2 25 25l-6 27-18 14-19-14Z" fill="#70994b" stroke="#263d20" stroke-width="4"/><path d="M20 28 32 23l10 10-13 9Zm45 0-13-5-10 10 13 9Z" fill="#f2c76c" stroke="#283a20" stroke-width="3"/><path d="m41 43-7 12 8 4 8-4Z" fill="#4b642f"/><path d="m26 61 16 9 17-9" stroke="#e5c28b" stroke-width="3"/><circle cx="13" cy="61" r="12" fill="#d4a043" stroke="#ffe091" stroke-width="3"/><path d="M13 54v14m-5-10h10" stroke="#ffeb9d" stroke-width="2"/></svg>`,
@@ -387,7 +405,7 @@
       const blob=new Blob([JSON.stringify(output,null,2)],{type:'application/json;charset=utf-8'});
       const url=URL.createObjectURL(blob);
       const anchor=document.createElement('a');
-      anchor.href=url;anchor.download=`cinzas-save-${this.state.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_-]+/g,'-')||'aventureiro'}.json`;
+      anchor.href=url;anchor.download=`hellward-save-${this.state.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_-]+/g,'-')||'aventureiro'}.json`;
       document.body.append(anchor);anchor.click();anchor.remove();
       setTimeout(()=>URL.revokeObjectURL(url),1200);
       this.toast('Backup JSON exportado com sucesso.','good');
@@ -867,7 +885,7 @@
       $('zoneName').textContent=z.name;
       $('zoneSubtitle').textContent=z.subtitle;
       $('zoneCrest').textContent=z.rune;
-      $('monsterArt').innerHTML=ART[z.art]; // Fixed, trusted in-source SVG dictionary only.
+      // Battlefield background changes per zone; sprite changes per individual monster.
       this.lastZoneRendered=s.zone;
     }
     renderCore() {
@@ -896,7 +914,23 @@
       $('currentZoneShort').textContent=ZONES[s.zone].rune;
       const phase=progressAt(s),bossKind=s.mob.kind;
       $('mobName').textContent=s.mob.name;
-      $('monsterArt').dataset.variant=String(ZONES[s.zone].names.indexOf(s.mob.name));
+      // A save cannot inject an arbitrary src: choose only from our bundled roster.
+      const visualIndex = bossKind === 'boss' ? 6 : bossKind === 'miniboss' ? 5
+        : Math.max(0, ZONES[s.zone].names.indexOf(s.mob.name));
+      const sprite = monsterSrc(s.zone,visualIndex);
+      const artNode = $('monsterArt');
+      artNode.dataset.family = MONSTER_FAMILIES[s.zone][visualIndex];
+      if (artNode.dataset.sprite !== sprite) {
+        artNode.dataset.sprite = sprite;
+        const portrait = document.createElement('img');
+        portrait.src = sprite;
+        portrait.width = 300;
+        portrait.height = 315;
+        portrait.alt = '';
+        portrait.draggable = false;
+        portrait.decoding = 'async';
+        artNode.replaceChildren(portrait);
+      }
       $('mobLevel').textContent=bossKind==='boss'?'☠ CHEFÃO':bossKind==='miniboss'?'✦ MINIBOSS':`Nv. ${fmt(s.mob.level)}`;
       $('battlefield').classList.toggle('boss-fight',bossKind==='boss');
       $('battlefield').classList.toggle('miniboss-fight',bossKind==='miniboss');
@@ -1023,7 +1057,7 @@
         const gate=!unlocked?'Derrote o chefão da região anterior':p.cleared?'✦ REGIÃO CONQUISTADA':`FASE ${p.stage}/10 · ${p.kills}/10 INIMIGOS`;
         const progressPercent=p.cleared?100:((p.stage-1)*10+p.kills)*100/100;
         const bossNote=p.cleared?'Chefão derrotado':p.stage===5&&!p.minibossDefeated?'✦ Miniboss na fase 5':p.stage===10?'☠ Chefão na fase 10':'Miniboss F5 · Chefão F10';
-        return `<article class="zone-card ${current?'current':''} ${!unlocked?'locked':''} ${p.cleared?'cleared':''}"><div class="zone-index">${p.cleared?'◆':unlocked?'✧':'♜'} &nbsp; REGIÃO ${z.rune}</div><h3>${esc(z.name)}</h3><p>${esc(z.subtitle)}</p><div class="zone-requirement">${gate}</div><div class="zone-progress-track"><span style="width:${progressPercent}%"></span></div><div class="zone-boss-note">${bossNote}</div><button type="button" data-travel="${index}" ${!unlocked||current?'disabled':''}>${current?'ATUAL':unlocked?'VIAJAR':'BLOQUEADA'}</button></article>`;
+        return `<article class="zone-card ${current?'current':''} ${!unlocked?'locked':''} ${p.cleared?'cleared':''}"><div class="zone-index">${p.cleared?'◆':unlocked?'✧':'♜'} &nbsp; REGIÃO ${z.rune}</div><h3>${esc(z.name)}</h3><p>${esc(z.subtitle)}</p><div class="zone-requirement">${gate}</div><div class="zone-progress-track"><span style="width:${progressPercent}%"></span></div><div class="zone-boss-note">${bossNote}</div><div class="zone-bestiary" aria-label="Bestiário de ${esc(z.name)}">${[...z.names,z.miniboss,z.boss].map((mobName,mobIndex)=>`<button type="button" class="bestiary-creature ${mobIndex>=5?'elite':''} ${MONSTER_SPRITES[index][mobIndex].endsWith('.png')?'original-art':''}" data-inspect-zone="${index}" data-inspect-creature="${mobIndex}" aria-label="Ver ${esc(mobName)}" title="${esc(mobName)}${MONSTER_SPRITES[index][mobIndex].endsWith('.png')?' · Arte personalizada':''}${mobIndex===5?' (Miniboss)':mobIndex===6?' (Chefão)':''}"><img src="${monsterSrc(index,mobIndex)}" width="56" height="60" loading="lazy" alt=""/></button>`).join('')}</div><button type="button" data-travel="${index}" ${!unlocked||current?'disabled':''}>${current?'ATUAL':unlocked?'VIAJAR':'BLOQUEADA'}</button></article>`;
       }).join('')}</div>`;
     }
     renderAscension() {
@@ -1043,9 +1077,26 @@
       }).join('');
       return `<div class="section-headline"><div><h2>O Pacto Eterno</h2><p>Almas persistem entre vidas. Desbloqueie nodos sucessivos e molde seu próprio legado.</p></div><span class="eyebrow">◆ ${fmt(s.souls)} ALMAS DISPONÍVEIS</span></div><div class="ascension-layout"><aside class="ascension-info"><div class="ascension-sigil">◆</div><h3>Renascimento</h3><p>Entregue o poder desta jornada ao crepúsculo. Sua próxima vida começará no nível 1, mas com equipamentos e habilidades permanentes.</p><div class="ascension-gain"><strong>+${fmt(gain)}</strong><span>ALMAS AO RENASCER</span></div><button type="button" class="buy-button ascend-button" data-ascend ${!ready?'disabled':''}>${ready?'INICIAR ASCENSÃO ✧':'ASCENSÃO BLOQUEADA'}</button><div class="ascension-note">${ready?'Pronto para transcender.':`Requer nível 15 (${s.level}/15) e 100 abates (${fmt(s.runKills)}/100).`} O inventário, almas, fragmentos e habilidades permanecem.</div></aside><div class="skill-tree">${paths}</div></div>`;
     }
+    inspectMonster(zoneIndex,creatureIndex) {
+      if (!Number.isInteger(zoneIndex) || !Number.isInteger(creatureIndex) ||
+          zoneIndex<0 || zoneIndex>=ZONES.length || creatureIndex<0 || creatureIndex>6) return;
+      const zone=ZONES[zoneIndex];
+      const names=[...zone.names,zone.miniboss,zone.boss];
+      const creature=names[creatureIndex];
+      const rank=creatureIndex===6?'CHEFÃO — FASE 10':creatureIndex===5?'MINIBOSS — FASE 5':'CRIATURA COMUM';
+      const isCustom=MONSTER_SPRITES[zoneIndex][creatureIndex].endsWith('.png');
+      this.dialog(creature,`${rank}  ·  ${zone.name}${isCustom?'  ·  ARTE EXCLUSIVA':''}`,[{text:'FECHAR',primary:true}],creatureIndex===6?'☠':creatureIndex===5?'✦':'◇');
+      const art=document.createElement('img');
+      art.className='dialog-monster-preview';
+      art.src=monsterSrc(zoneIndex,creatureIndex);
+      art.alt='';
+      art.width=260;art.height=274;art.draggable=false;
+      $('dialogText').prepend(art);
+    }
     onPanelClick(e) {
       if(!this.state)return;
       const b=e.target.closest('button');if(!b||b.disabled)return;
+      if(b.dataset.inspectZone!==undefined){this.inspectMonster(Number(b.dataset.inspectZone),Number(b.dataset.inspectCreature));return;}
       if(b.dataset.qty){this.buyQuantity=b.dataset.qty==='max'?'max':integer(b.dataset.qty,1,1,10);this.renderPanel();return;}
       if(b.dataset.buy){this.buyUpgrade(b.dataset.buy);return;}
       if(b.dataset.equip){this.equipItem(b.dataset.equip);return;}
