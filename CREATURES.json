@@ -1,121 +1,464 @@
 [
   {
     "region": 1,
-    "slot": 1,
-    "type": "Comum",
-    "name": "Guerreiro Esquelético",
-    "asset": "assets/monsters/guerreiro-esqueletico.png"
-  },
-  {
-    "region": 1,
-    "slot": 4,
-    "type": "Comum",
-    "name": "Zumbi Errante",
-    "asset": "assets/monsters/zumbi-errante.png"
-  },
-  {
-    "region": 1,
-    "slot": 5,
-    "type": "Miniboss (fase 5)",
-    "name": "Espadachim Corrompido",
-    "asset": "assets/monsters/espadachim-corrompido.png"
-  },
-  {
-    "region": 1,
-    "slot": 6,
-    "type": "Chefão (fase 10)",
-    "name": "Cavaleiro Decapitado",
-    "asset": "assets/monsters/cavaleiro-decapitado.png"
-  },
-  {
-    "region": 2,
+    "region_name": "Campos de Cinza",
     "slot": 0,
-    "type": "Comum",
-    "name": "Lobo Sombrio",
-    "asset": "assets/monsters/lobo-sombrio.png"
+    "type": "common",
+    "name": "Condenado Errante",
+    "asset": "assets/monsters/condenado-errante.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
   },
   {
-    "region": 2,
+    "region": 1,
+    "region_name": "Campos de Cinza",
     "slot": 1,
-    "type": "Comum",
-    "name": "Ratazana Pestilenta",
-    "asset": "assets/monsters/ratazana-pestilenta.png"
+    "type": "common",
+    "name": "Guerreiro Esquelético",
+    "asset": "assets/monsters/guerreiro-esqueletico.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
   },
   {
-    "region": 2,
-    "slot": 4,
-    "type": "Comum",
-    "name": "Goblin Selvagem",
-    "asset": "assets/monsters/goblin-selvagem.png"
+    "region": 1,
+    "region_name": "Campos de Cinza",
+    "slot": 2,
+    "type": "common",
+    "name": "Sentinela Caída",
+    "asset": "assets/monsters/sentinela-caida.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
   },
   {
-    "region": 2,
-    "slot": 5,
-    "type": "Miniboss (fase 5)",
-    "name": "Rei das Ratazanas",
-    "asset": "assets/monsters/rei-das-ratazanas.png"
-  },
-  {
-    "region": 2,
-    "slot": 6,
-    "type": "Chefão (fase 10)",
-    "name": "Hidra Profanada",
-    "asset": "assets/monsters/hidra-profanada.png"
-  },
-  {
-    "region": 3,
-    "slot": 5,
-    "type": "Miniboss (fase 5)",
-    "name": "Bruxa das Criptas",
-    "asset": "assets/monsters/bruxa-das-criptas.png"
-  },
-  {
-    "region": 3,
-    "slot": 6,
-    "type": "Chefão (fase 10)",
-    "name": "Rei Lich",
-    "asset": "assets/monsters/rei-lich.png"
-  },
-  {
-    "region": 4,
+    "region": 1,
+    "region_name": "Campos de Cinza",
     "slot": 3,
-    "type": "Comum",
+    "type": "common",
+    "name": "Arqueiro Macabro",
+    "asset": "assets/monsters/arqueiro-macabro.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 1,
+    "region_name": "Campos de Cinza",
+    "slot": 4,
+    "type": "common",
+    "name": "Zumbi Errante",
+    "asset": "assets/monsters/zumbi-errante.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 1,
+    "region_name": "Campos de Cinza",
+    "slot": 5,
+    "type": "miniboss",
+    "name": "Espadachim Corrompido",
+    "asset": "assets/monsters/espadachim-corrompido.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 1,
+    "region_name": "Campos de Cinza",
+    "slot": 6,
+    "type": "boss",
+    "name": "Cavaleiro Decapitado",
+    "asset": "assets/monsters/cavaleiro-decapitado.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 2,
+    "region_name": "Bosque Profanado",
+    "slot": 0,
+    "type": "common",
+    "name": "Lobo Sombrio",
+    "asset": "assets/monsters/lobo-sombrio.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 2,
+    "region_name": "Bosque Profanado",
+    "slot": 1,
+    "type": "common",
+    "name": "Ratazana Pestilenta",
+    "asset": "assets/monsters/ratazana-pestilenta.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 2,
+    "region_name": "Bosque Profanado",
+    "slot": 2,
+    "type": "common",
+    "name": "Lobo da Praga",
+    "asset": "assets/monsters/lobo-da-praga.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 2,
+    "region_name": "Bosque Profanado",
+    "slot": 3,
+    "type": "common",
+    "name": "Entorpecido de Musgo",
+    "asset": "assets/monsters/entorpecido-de-musgo.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 2,
+    "region_name": "Bosque Profanado",
+    "slot": 4,
+    "type": "common",
+    "name": "Goblin Selvagem",
+    "asset": "assets/monsters/goblin-selvagem.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 2,
+    "region_name": "Bosque Profanado",
+    "slot": 5,
+    "type": "miniboss",
+    "name": "Rei das Ratazanas",
+    "asset": "assets/monsters/rei-das-ratazanas.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 2,
+    "region_name": "Bosque Profanado",
+    "slot": 6,
+    "type": "boss",
+    "name": "Hidra Profanada",
+    "asset": "assets/monsters/hidra-profanada.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 3,
+    "region_name": "Criptas Afogadas",
+    "slot": 0,
+    "type": "common",
+    "name": "Espectro da Cripta",
+    "asset": "assets/monsters/espectro-da-cripta.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 3,
+    "region_name": "Criptas Afogadas",
+    "slot": 1,
+    "type": "common",
+    "name": "Alma Enregelada",
+    "asset": "assets/monsters/alma-enregelada.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 3,
+    "region_name": "Criptas Afogadas",
+    "slot": 2,
+    "type": "common",
+    "name": "Lamento Submerso",
+    "asset": "assets/monsters/lamento-submerso.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 3,
+    "region_name": "Criptas Afogadas",
+    "slot": 3,
+    "type": "common",
+    "name": "Afogado Sem Rosto",
+    "asset": "assets/monsters/afogado-sem-rosto.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 3,
+    "region_name": "Criptas Afogadas",
+    "slot": 4,
+    "type": "common",
+    "name": "Sacerdote Esquecido",
+    "asset": "assets/monsters/sacerdote-esquecido.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 3,
+    "region_name": "Criptas Afogadas",
+    "slot": 5,
+    "type": "miniboss",
+    "name": "Bruxa das Criptas",
+    "asset": "assets/monsters/bruxa-das-criptas.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 3,
+    "region_name": "Criptas Afogadas",
+    "slot": 6,
+    "type": "boss",
+    "name": "Rei Lich",
+    "asset": "assets/monsters/rei-lich.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 4,
+    "region_name": "Fortaleza de Ferro",
+    "slot": 0,
+    "type": "common",
+    "name": "Golem Ferrugem",
+    "asset": "assets/monsters/golem-ferrugem.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 4,
+    "region_name": "Fortaleza de Ferro",
+    "slot": 1,
+    "type": "common",
+    "name": "Carcereiro Rúnico",
+    "asset": "assets/monsters/carcereiro-runico.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 4,
+    "region_name": "Fortaleza de Ferro",
+    "slot": 2,
+    "type": "common",
+    "name": "Guardião de Basalto",
+    "asset": "assets/monsters/guardiao-de-basalto.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 4,
+    "region_name": "Fortaleza de Ferro",
+    "slot": 3,
+    "type": "common",
     "name": "Orc Carniceiro",
-    "asset": "assets/monsters/orc-carniceiro.png"
+    "asset": "assets/monsters/orc-carniceiro.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
   },
   {
     "region": 4,
+    "region_name": "Fortaleza de Ferro",
+    "slot": 4,
+    "type": "common",
+    "name": "Construto Enferrujado",
+    "asset": "assets/monsters/construto-enferrujado.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 4,
+    "region_name": "Fortaleza de Ferro",
     "slot": 5,
-    "type": "Miniboss (fase 5)",
+    "type": "miniboss",
     "name": "Ogro do Ferro",
-    "asset": "assets/monsters/ogro-do-ferro.png"
+    "asset": "assets/monsters/ogro-do-ferro.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
   },
   {
     "region": 4,
+    "region_name": "Fortaleza de Ferro",
     "slot": 6,
-    "type": "Chefão (fase 10)",
+    "type": "boss",
     "name": "Cavaleiro do Abismo",
-    "asset": "assets/monsters/cavaleiro-do-abismo.png"
+    "asset": "assets/monsters/cavaleiro-do-abismo.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
   },
   {
     "region": 5,
+    "region_name": "Fendas Infernais",
+    "slot": 0,
+    "type": "common",
+    "name": "Arauto das Chamas",
+    "asset": "assets/monsters/arauto-das-chamas.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 5,
+    "region_name": "Fendas Infernais",
+    "slot": 1,
+    "type": "common",
+    "name": "Demônio Carmesim",
+    "asset": "assets/monsters/demonio-carmesim.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 5,
+    "region_name": "Fendas Infernais",
+    "slot": 2,
+    "type": "common",
+    "name": "Flagelo Abissal",
+    "asset": "assets/monsters/flagelo-abissal.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 5,
+    "region_name": "Fendas Infernais",
+    "slot": 3,
+    "type": "common",
+    "name": "Súcubo das Cinzas",
+    "asset": "assets/monsters/sucubo-das-cinzas.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 5,
+    "region_name": "Fendas Infernais",
+    "slot": 4,
+    "type": "common",
+    "name": "Sombra Incandescente",
+    "asset": "assets/monsters/sombra-incandescente.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 5,
+    "region_name": "Fendas Infernais",
     "slot": 5,
-    "type": "Miniboss (fase 5)",
+    "type": "miniboss",
     "name": "Devorador Mórbido",
-    "asset": "assets/monsters/devorador-morbido.png"
+    "asset": "assets/monsters/devorador-morbido.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
   },
   {
     "region": 5,
+    "region_name": "Fendas Infernais",
     "slot": 6,
-    "type": "Chefão (fase 10)",
+    "type": "boss",
     "name": "Dragão das Fendas",
-    "asset": "assets/monsters/dragao-das-fendas.png"
+    "asset": "assets/monsters/dragao-das-fendas.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
   },
   {
     "region": 6,
+    "region_name": "Trono do Crepúsculo",
+    "slot": 0,
+    "type": "common",
+    "name": "Lich Imortal",
+    "asset": "assets/monsters/lich-imortal.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 6,
+    "region_name": "Trono do Crepúsculo",
+    "slot": 1,
+    "type": "common",
+    "name": "Rei das Sombras",
+    "asset": "assets/monsters/rei-das-sombras.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 6,
+    "region_name": "Trono do Crepúsculo",
+    "slot": 2,
+    "type": "common",
+    "name": "Devorador de Estrelas",
+    "asset": "assets/monsters/devorador-de-estrelas.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 6,
+    "region_name": "Trono do Crepúsculo",
+    "slot": 3,
+    "type": "common",
+    "name": "Sacerdote do Vazio",
+    "asset": "assets/monsters/sacerdote-do-vazio.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 6,
+    "region_name": "Trono do Crepúsculo",
+    "slot": 4,
+    "type": "common",
+    "name": "Arauto do Eclipse",
+    "asset": "assets/monsters/arauto-do-eclipse.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 6,
+    "region_name": "Trono do Crepúsculo",
     "slot": 5,
-    "type": "Miniboss (fase 5)",
+    "type": "miniboss",
     "name": "Medusa do Eclipse",
-    "asset": "assets/monsters/medusa-do-eclipse.png"
+    "asset": "assets/monsters/medusa-do-eclipse.png",
+    "source": "PNG anterior",
+    "battle_direction": "left",
+    "sprite_mirrored": true
+  },
+  {
+    "region": 6,
+    "region_name": "Trono do Crepúsculo",
+    "slot": 6,
+    "type": "boss",
+    "name": "Imperador do Crepúsculo",
+    "asset": "assets/monsters/imperador-do-crepusculo.png",
+    "source": "novo RAR",
+    "battle_direction": "left",
+    "sprite_mirrored": false
   }
 ]

@@ -3,29 +3,41 @@
 (() => {
   'use strict';
 
-  const SAVE_VERSION = 2;
+  const SAVE_VERSION = 3;
+  // New campaign. V7 does not load old saves or old JSON backups.
+  const RESET_MARKER = 'hellward_v7_fresh_start';
   const ENEMIES_PER_PHASE = 10;
   const PHASES_PER_ZONE = 10;
-  const PROFILE_INDEX_KEY = 'cinzas_profiles_v1';
-  const SAVE_PREFIX = 'cinzas_save_v1_';
+  const PROFILE_INDEX_KEY = 'hellward_profiles_v7';
+  const SAVE_PREFIX = 'hellward_save_v7_';
   const MAX_NUMBER = 1e250;
   const MAX_LEVEL = 1500;
   const MAX_RANK = 800;
-  const MAX_INVENTORY = 80;
+  const MAX_INVENTORY = 140;
   const MAX_OFFLINE_SECONDS = 12 * 60 * 60;
   const MAX_OFFLINE_KILLS = 30000;
   const SAVE_INTERVAL = 10000;
   const TABS = new Set(['upgrades', 'inventory', 'zones', 'ascension']);
-  const SLOTS = ['weapon', 'armor', 'ring', 'relic'];
-  const SLOT_NAMES = { weapon: 'Arma', armor: 'Armadura', ring: 'Anel', relic: 'Relíquia' };
-  const SLOT_SYMBOLS = { weapon: '⚔', armor: '♜', ring: '◉', relic: '✧' };
+  const SLOTS = ['weapon', 'helmet', 'armor', 'ring', 'necklace', 'relic'];
+  const SLOT_NAMES = { weapon: 'Arma', helmet:'Capacete', armor: 'Armadura', ring: 'Anel', necklace:'Colar', relic: 'Relíquia' };
+  const SLOT_SYMBOLS = { weapon: '⚔', helmet:'♙', armor: '♜', ring: '◉', necklace:'◇', relic: '✧' };
   const RARITIES = [
+    {id:'sucata',label:'Sucata',multiplier:0.3},
     {id: 'comum', label: 'Comum', multiplier: 1},
     {id: 'incomum', label: 'Incomum', multiplier: 1.35},
     {id: 'raro', label: 'Raro', multiplier: 1.95},
     {id: 'epico', label: 'Épico', multiplier: 3},
     {id: 'lendario', label: 'Lendário', multiplier: 5}
   ];
+  // 100 game-ready items embedded via item-catalog.js; avoids network requests on GitHub Pages.
+  const ITEM_CATALOG = Array.isArray(window.HELLWARD_ITEMS) ? window.HELLWARD_ITEMS : [];
+  const CATALOG_BY_ID = new Map(ITEM_CATALOG.map(x => [x.id,x]));
+  const ITEM_ZONE_MAP = ['Campos de Cinza','Bosque Profanado','Criptas Afogadas','Fortaleza de Ferro','Fendas Infernais','Trono do Crepúsculo'];
+  const CATALOG_SLOTS = {arma:'weapon',armadura:'armor',capacete:'helmet',anel:'ring',colar:'necklace','relíquia':'relic'};
+  const CATALOG_RARITIES = {Sucata:'sucata',Comum:'comum',Incomum:'incomum',Raro:'raro','Épico':'epico',Lendário:'lendario'};
+  const CATALOG_RARITY_WEIGHTS = {sucata:0,comum:52,incomum:29,raro:13,epico:5,lendario:1};
+  const catalogZone = (def) => Math.max(0,ITEM_ZONE_MAP.indexOf(def.regiao));
+  const catalogImage = (id) => CATALOG_BY_ID.has(id) ? `assets/items/${id}.png` : null;
   const ZONES = [
     {name: 'Campos de Cinza', subtitle: 'Onde os primeiros condenados despertam.', names: ['Condenado Errante', 'Guerreiro Esquelético', 'Sentinela Caída', 'Arqueiro Macabro', 'Zumbi Errante'], miniboss:'Espadachim Corrompido', boss:'Cavaleiro Decapitado', level: 1, kills: 0, rune: 'I', art: 'skeleton'},
     {name: 'Bosque Profanado', subtitle: 'Raízes antigas escondem fome e maldição.', names: ['Lobo Sombrio', 'Ratazana Pestilenta', 'Lobo da Praga', 'Entorpecido de Musgo', 'Goblin Selvagem'], miniboss:'Rei das Ratazanas', boss:'Hidra Profanada', level: 5, kills: 20, rune: 'II', art: 'beast'},
@@ -38,7 +50,10 @@
     {id: 'strike', icon: '⚔', title: 'Lâmina Afiada', desc: 'Reforce os golpes para causar mais dano a cada clique.', base: 12, growth: 1.16, effect: '+2,4 dano por nível'},
     {id: 'ritual', icon: '✥', title: 'Ritual Arcano', desc: 'Invoca energia ancestral que fere inimigos automaticamente.', base: 22, growth: 1.175, effect: '+1,8 DPS por nível'},
     {id: 'banner', icon: '✦', title: 'Estandarte Dourado', desc: 'Cada vitória rende mais ouro às suas reservas.', base: 75, growth: 1.20, effect: '+7% de ouro por nível'},
-    {id: 'focus', icon: '✧', title: 'Olhar do Predador', desc: 'Aprimora a precisão dos seus ataques críticos.', base: 110, growth: 1.23, effect: '+0,7% de crítico por nível'}
+    {id: 'focus', icon: '✧', title: 'Olhar do Predador', desc: 'Aprimora a precisão dos seus ataques críticos.', base: 110, growth: 1.23, effect: '+0,7% de crítico por nível'},
+    {id: 'vitality', icon: '♥', title: 'Vigor do Errante', desc: 'Aumenta a vida máxima do herói.', base: 24, growth: 1.16, effect: '+35 pontos de vida por nível'},
+    {id: 'guard', icon: '⛨', title: 'Postura Defensiva', desc: 'Reduz o dano sofrido de criaturas e chefões.', base: 35, growth: 1.19, effect: '+2,5 de defesa por nível'},
+    {id: 'recovery', icon: '✚', title: 'Sangue Renovado', desc: 'Restaura vida a cada segundo em combate.', base: 55, growth: 1.21, effect: '+0,65 de vida/segundo por nível'}
   ];
   const SKILL_PATHS = [
     {id: 'warrior', name: 'Caminho do Guerreiro', subtitle: 'FORÇA • PRECISÃO • PODER', icon: '⚔'},
@@ -67,22 +82,19 @@
   };
   const PREFIXES = {comum:['Gasto','Rústico','Esquecido'], incomum:['Temperado','Velado','Vigilante'], raro:['Rúnico','Sombrio','Venerável'], epico:['Espectral','Imperial','Profanado'], lendario:['Eterno','do Ocaso','da Última Aurora']};
 
-  // 42 creature slots: 17 unique custom PNGs + 25 individual SVGs (5 common, 1 miniboss, 1 boss per area).
-  // The names are intentionally indexed by the combat roster to eliminate shared art and hue swaps.
+  // 42 unique transparent PNG sprites, indexed exactly like the fixed combat roster.
+  // V7 starts fresh with combat survival and a new save schema.
   const MONSTER_SPRITES = [
-    ['condenado-errante', 'guerreiro-esqueletico.png', 'sentinela-caida', 'arqueiro-macabro', 'zumbi-errante.png', 'espadachim-corrompido.png', 'cavaleiro-decapitado.png'], 
-    ['lobo-sombrio.png', 'ratazana-pestilenta.png', 'lobo-da-praga', 'entorpecido-de-musgo', 'goblin-selvagem.png', 'rei-das-ratazanas.png', 'hidra-profanada.png'], 
-    ['espectro-da-cripta', 'alma-enregelada', 'lamento-submerso', 'afogado-sem-rosto', 'sacerdote-esquecido', 'bruxa-das-criptas.png', 'rei-lich.png'], 
-    ['golem-ferrugem', 'carcereiro-runico', 'guardiao-de-basalto', 'orc-carniceiro.png', 'construto-enferrujado', 'ogro-do-ferro.png', 'cavaleiro-do-abismo.png'], 
-    ['arauto-das-chamas', 'demonio-carmesim', 'flagelo-abissal', 'sucubo-das-cinzas', 'sombra-incandescente', 'devorador-morbido.png', 'dragao-das-fendas.png'], 
-    ['lich-imortal', 'rei-das-sombras', 'devorador-de-estrelas', 'sacerdote-do-vazio', 'arauto-do-eclipse', 'medusa-do-eclipse.png', 'imperador-do-crepusculo'], 
+    ['condenado-errante.png', 'guerreiro-esqueletico.png', 'sentinela-caida.png', 'arqueiro-macabro.png', 'zumbi-errante.png', 'espadachim-corrompido.png', 'cavaleiro-decapitado.png'],
+    ['lobo-sombrio.png', 'ratazana-pestilenta.png', 'lobo-da-praga.png', 'entorpecido-de-musgo.png', 'goblin-selvagem.png', 'rei-das-ratazanas.png', 'hidra-profanada.png'],
+    ['espectro-da-cripta.png', 'alma-enregelada.png', 'lamento-submerso.png', 'afogado-sem-rosto.png', 'sacerdote-esquecido.png', 'bruxa-das-criptas.png', 'rei-lich.png'],
+    ['golem-ferrugem.png', 'carcereiro-runico.png', 'guardiao-de-basalto.png', 'orc-carniceiro.png', 'construto-enferrujado.png', 'ogro-do-ferro.png', 'cavaleiro-do-abismo.png'],
+    ['arauto-das-chamas.png', 'demonio-carmesim.png', 'flagelo-abissal.png', 'sucubo-das-cinzas.png', 'sombra-incandescente.png', 'devorador-morbido.png', 'dragao-das-fendas.png'],
+    ['lich-imortal.png', 'rei-das-sombras.png', 'devorador-de-estrelas.png', 'sacerdote-do-vazio.png', 'arauto-do-eclipse.png', 'medusa-do-eclipse.png', 'imperador-do-crepusculo.png'],
   ];
 
-  // The custom illustrations are transparent PNGs; legacy creatures remain individual SVGs.
-  const monsterSrc = (zoneIndex, creatureIndex) => {
-    const slug = MONSTER_SPRITES[zoneIndex][creatureIndex];
-    return `assets/monsters/${slug.endsWith('.png') ? slug : slug + '.svg'}`;
-  };
+  const monsterSrc = (zoneIndex, creatureIndex) =>
+    `assets/monsters/${MONSTER_SPRITES[zoneIndex][creatureIndex]}?v=5.1-left`;
 
   // Shape-specific movement: skeletons, beasts, spirits, constructs, and cosmic beings move differently.
   const MONSTER_FAMILIES = [
@@ -129,11 +141,20 @@
   const fmtPercent = (n) => `${(number(n) * 100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`;
   const uid = () => (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(36).slice(2,12)}`;
   const xpNeeded = (lv) => Math.floor(Math.min(MAX_NUMBER, 24 * power(1.21, Math.max(0, lv-1)) + lv * 7));
-  const slotStats = () => ({click:0, dps:0, crit:0, gold:0, luck:0});
+  const slotStats = () => ({click:0, dps:0, crit:0, gold:0, luck:0, health:0, defense:0});
   const emptyRanks = (table) => Object.fromEntries(table.map(x => [x.id, 0]));
   const timeLabel = () => new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
   const randEventDelay = () => rand(39000, 75000);
   const validZone = (z) => Math.min(ZONES.length-1, integer(z, 0, 0, ZONES.length-1));
+  const heroEquipmentStats = (s) => {
+    const total=slotStats();
+    for(const slot of SLOTS){
+      const item=s.inventory.find(x=>x.id===s.equipment[slot] && x.slot===slot && x.kind==='equipment');
+      if(item)for(const key of Object.keys(total))total[key]+=number(item.stats?.[key]);
+    }
+    return total;
+  };
+  const heroMaxHp = (s) => Math.max(30,Math.floor(110+(s.level-1)*13+s.upgrades.vitality*35+heroEquipmentStats(s).health));
   const freshProgress = () => ({stage:1,kills:0,minibossDefeated:false,bossDefeated:false,cleared:false});
   const progressAt = (s) => s.zoneProgress[s.zone];
   // Bosses remain mandatory: no amount of farming, XP or offline DPS skips them.
@@ -148,6 +169,13 @@
     const base=multiply(28*power(2.9,s.zone),phaseMultiplier(s));
     return Math.max(1,Math.floor(multiply(base,kind==='boss'?18:kind==='miniboss'?9:1)));
   };
+  // Real-time attacks use absolute timestamps. Background/offline combat stays safe.
+  const enemyAttackInterval = (mob) => mob.kind==='boss' ? 3600 : mob.kind==='miniboss' ? 3050 : 2750;
+  const enemyBaseDamage = (s) => {
+    const kind=s.mob.kind;
+    const base=5.4 * power(1.46,s.zone) * power(1.135,progressAt(s).stage-1);
+    return Math.max(1,Math.round(multiply(base,kind==='boss'?2.65:kind==='miniboss'?1.8:1)));
+  };
   const freshMob = (s,previousName='') => {
     const zone=ZONES[s.zone],progress=progressAt(s);
     const kind=requiredBossKind(progress)||'normal';
@@ -157,19 +185,29 @@
     return {name,kind,hp:maxHp,maxHp,level:1+s.zone*12+(progress.stage-1)*2+(kind==='normal'?0:kind==='boss'?4:2)};
   };
   const newState = (name) => {
-    const s = {version:SAVE_VERSION,name:safeName(name,18) || 'Errante',createdAt:now(),lastSeen:now(),level:1,xp:0,gold:0,souls:0,shards:0,zone:0,zoneKills:Array(ZONES.length).fill(0),zoneProgress:ZONES.map(freshProgress),upgrades:emptyRanks(UPGRADES),skills:emptyRanks(SKILLS),inventory:[],equipment:Object.fromEntries(SLOTS.map(x=>[x,null])),mob:null,event:null,nextEventAt:now()+randEventDelay(),lastEventAt:0,runKills:0,runGold:0,lifetimeKills:0,rebirths:0};
+    const s = {version:SAVE_VERSION,name:safeName(name,18) || 'Errante',heroHp:110,deadUntil:0,nextEnemyAttackAt:0,createdAt:now(),lastSeen:now(),level:1,xp:0,gold:0,souls:0,shards:0,zone:0,zoneKills:Array(ZONES.length).fill(0),zoneProgress:ZONES.map(freshProgress),upgrades:emptyRanks(UPGRADES),skills:emptyRanks(SKILLS),inventory:[],equipment:Object.fromEntries(SLOTS.map(x=>[x,null])),mob:null,event:null,nextEventAt:now()+randEventDelay(),lastEventAt:0,runKills:0,runGold:0,lifetimeKills:0,rebirths:0,potionBuffUntil:0,potionBonus:0};
     s.mob = freshMob(s);
+    s.nextEnemyAttackAt = now()+enemyAttackInterval(s.mob);
     return s;
   };
   function normalizeItem(item) {
-    if (!item || typeof item !== 'object' || !SLOTS.includes(item.slot)) return null;
-    if (!RARITIES.some(r=>r.id === item.rarity)) return null;
-    const stats = slotStats();
-    for (const key of Object.keys(stats)) stats[key] = number(item.stats?.[key],0,0,1e8);
-    return {id:String(item.id ?? '').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,90) || uid(),slot:item.slot,rarity:item.rarity,name:safeName(item.name,75) || 'Relíquia sem Nome',level:integer(item.level,1,1,MAX_LEVEL),stats,createdAt:integer(item.createdAt,now(),0,now()+100000)};
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+    const kind=['equipment','material','potion'].includes(item.kind)?item.kind:'equipment';
+    const catalogId=String(item.catalogId||'').replace(/[^a-z0-9-]/g,'').slice(0,95);
+    const def=CATALOG_BY_ID.get(catalogId);
+    if (kind==='equipment' && !SLOTS.includes(item.slot)) return null;
+    if (kind!=='equipment' && !def) return null;
+    if (!RARITIES.some(r=>r.id===item.rarity)) return null;
+    const stats=slotStats();
+    for (const key of Object.keys(stats)) stats[key]=number(item.stats?.[key],0,0,1e8);
+    return {id:String(item.id??'').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,100)||uid(),kind,
+      catalogId:def?.id||'',slot:kind==='equipment'?item.slot:null,rarity:item.rarity,
+      name:safeName(item.name,75)||def?.nome||'Item desconhecido',
+      level:integer(item.level,1,1,MAX_LEVEL),qty:integer(item.qty,1,1,99999),stats,
+      createdAt:integer(item.createdAt,now(),0,now()+100000)};
   }
   function normalizeSave(raw, fallbackName) {
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw) || raw.version > SAVE_VERSION) throw Error('Versão de save incompatível.');
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw) || raw.version !== SAVE_VERSION) throw Error('Versão de save incompatível.');
     const s = newState(fallbackName);
     s.name = safeName(raw.name,18) || safeName(fallbackName,18) || 'Errante';
     s.createdAt = integer(raw.createdAt,now(),0,now());
@@ -183,6 +221,9 @@
     s.runGold = number(raw.runGold);
     s.lifetimeKills = integer(raw.lifetimeKills,0,0,1e12);
     s.rebirths = integer(raw.rebirths,0,0,1e8);
+    s.heroHp=number(raw.heroHp,110,0,1e12);
+    s.deadUntil=integer(raw.deadUntil,0,0,now()+8000);
+    s.nextEnemyAttackAt=now()+2750;
     for (const x of UPGRADES) s.upgrades[x.id] = integer(raw.upgrades?.[x.id],0,0,MAX_RANK);
     for (const x of SKILLS) s.skills[x.id] = integer(raw.skills?.[x.id],0,0,x.max);
     if (Array.isArray(raw.zoneKills)) s.zoneKills = ZONES.map((_,i)=>integer(raw.zoneKills[i],0,0,1e10));
@@ -247,6 +288,9 @@
         (ZONES[s.zone].names.includes(raw.mob.name)?raw.mob.name:s.mob.name);
       s.mob={name,kind,hp:number(raw.mob.hp,expectedMax,0,expectedMax)||expectedMax,maxHp:expectedMax,level:s.mob.level};
     }
+    // Apply trusted max health after rebuilding inventory and equipped stats.
+    s.heroHp=Math.min(s.heroHp,heroMaxHp(s));
+    if (s.heroHp<=0 && !s.deadUntil) s.deadUntil=now()+8000;
     s.lastEventAt = integer(raw.lastEventAt,0,0,now());
     s.nextEventAt = integer(raw.nextEventAt,now()+randEventDelay(),0,now()+120000);
     if (raw.event && ['goblin','chest'].includes(raw.event.type) && number(raw.event.expiresAt)>now()) {
@@ -272,6 +316,7 @@
       this.startedLoop = false;
       this.sessionStorage = new Map();
       this.storageAvailable = this.testStorage();
+      this.resetLegacyProgress();
       this.bindEvents();
       this.showAuth();
       window.addEventListener('pagehide',()=>this.save());
@@ -284,6 +329,17 @@
     testStorage() {
       try {localStorage.setItem('cinzas_probe','1');localStorage.removeItem('cinzas_probe');return true;}
       catch (_) {return false;}
+    }
+    resetLegacyProgress() {
+      if(!this.storageAvailable)return;
+      try {
+        if(localStorage.getItem(RESET_MARKER)==='1')return;
+        // Only game-owned legacy keys; never erase unrelated localStorage keys.
+        for(const key of Object.keys(localStorage)) {
+          if(key==='cinzas_profiles_v1'||key.startsWith('cinzas_save_v1_')||key==='hellward_profiles_v6'||key.startsWith('hellward_save_v6_'))localStorage.removeItem(key);
+        }
+        localStorage.setItem(RESET_MARKER,'1');
+      }catch(_) { /* private-browsing/session-storage fallback */ }
     }
     read(key) {
       if (!this.storageAvailable) return this.sessionStorage.get(key) || null;
@@ -357,6 +413,8 @@
       state.lastSeen=now();
       if (state.event && state.event.expiresAt <= now()) state.event=null;
       state.nextEventAt=now()+this.nextEventDelay();
+      state.nextEnemyAttackAt=now()+enemyAttackInterval(state.mob);
+      if(state.deadUntil && state.deadUntil<=now()) {state.deadUntil=0;state.heroHp=this.bonuses().maxHp;state.mob=freshMob(state);}
       this.touchProfile();
       this.renderEverything();
       this.addLog('Uma chama ressurge nas ruínas. A caçada continua.','✦','good');
@@ -401,7 +459,7 @@
     exportSave() {
       if (!this.state) {this.toast('Abra um perfil para exportar o progresso.');return;}
       this.save();
-      const output={type:'cinzas-do-crepusculo',format:1,exportedAt:new Date().toISOString(),state:this.state};
+      const output={type:'hellward',format:3,exportedAt:new Date().toISOString(),state:this.state};
       const blob=new Blob([JSON.stringify(output,null,2)],{type:'application/json;charset=utf-8'});
       const url=URL.createObjectURL(blob);
       const anchor=document.createElement('a');
@@ -414,7 +472,7 @@
       if (file.size>2*1024*1024) {this.toast('Arquivo muito grande. O limite é 2 MB.');return;}
       try {
         const imported=JSON.parse(await file.text());
-        if (imported?.type!=='cinzas-do-crepusculo' || imported?.format!==1 || !imported?.state || typeof imported.state!=='object') throw Error('Arquivo não é um backup válido do jogo.');
+        if (imported?.type!=='hellward' || imported?.format!==3 || imported?.state?.version!==SAVE_VERSION || typeof imported.state!=='object') throw Error('Use um backup Hellward V7. Saves anteriores foram descontinuados para esta nova campanha.');
         const state=normalizeSave(imported.state,'Errante');
         const perform=()=>{
           if(this.state){state.name=this.state.name;this.activate({id:this.profileId,name:state.name},state);this.toast('Backup importado e validado.','good');}
@@ -461,26 +519,20 @@
       if(total>=60) return `${Math.floor(total/60)}min`;
       return `${total}s`;
     }
-    equippedStats() {
-      const stats=slotStats();const s=this.state;
-      for(const slot of SLOTS){
-        const id=s.equipment[slot];
-        if (!id) continue;
-        const item=s.inventory.find(x=>x.id===id && x.slot===slot);
-        if(item)for(const key of Object.keys(stats))stats[key]+=item.stats[key];
-      }
-      return stats;
-    }
+    equippedStats() { return heroEquipmentStats(this.state); }
     bonuses() {
       const s=this.state,eq=this.equippedStats();
-      const click=multiply(2+s.level*.5+s.upgrades.strike*2.4+eq.click,1+s.skills.w1*.2);
-      const dps=multiply(s.upgrades.ritual*1.8+eq.dps,1+s.skills.s1*.25+s.skills.s4*.3);
+      const click=multiply(2+s.level*.5+s.upgrades.strike*2.4+eq.click,(1+s.skills.w1*.2));
+      const dps=multiply(s.upgrades.ritual*1.8+eq.dps,(1+s.skills.s1*.25+s.skills.s4*.3));
       const crit=Math.min(.75,.08+s.upgrades.focus*.007+s.skills.w2*.02+eq.crit);
       const critDamage=1.7+s.skills.w3*.22;
       const luck=s.skills.r1*.06+eq.luck;
       const gold=1+s.upgrades.banner*.07+s.skills.s3*.10+eq.gold;
       const drop=Math.min(.7,.18+luck*.12);
-      return {click,dps,crit,critDamage,luck,gold,drop,offline:.6*(1+s.skills.s2*.12),eventDamage:1+s.skills.w4*.35};
+      const maxHp=heroMaxHp(s);
+      const defense=Math.max(0,3+(s.level-1)*.28+s.upgrades.guard*2.5+eq.defense);
+      const regen=Math.max(.2,.55+maxHp*.0025+s.upgrades.recovery*.65);
+      return {click,dps,crit,critDamage,luck,gold,drop,maxHp,defense,regen,offline:.6*(1+s.skills.s2*.12),eventDamage:1+s.skills.w4*.35};
     }
     awardGold(amount) {
       const value=number(amount);
@@ -502,6 +554,7 @@
       }
       if(s.level>=MAX_LEVEL)s.xp=0;
       if(s.level>before){
+        s.heroHp=Math.min(heroMaxHp(s),s.heroHp+(s.level-before)*13);
         this.addLog(`Você alcançou o nível ${s.level}!`,'✦','good');
         this.toast(`NÍVEL ${s.level} — seu poder aumentou!`,'good');
         this.renderPanel();
@@ -509,7 +562,7 @@
     }
     grantOffline(seconds) {
       const s=this.state;
-      if(!s||seconds<1)return {kills:0,gold:0,xp:0};
+      if(!s||seconds<1 || s.deadUntil || s.heroHp<=0)return {kills:0,gold:0,xp:0};
       const bonus=this.bonuses();
       if(bonus.dps<=0)return {kills:0,gold:0,xp:0};
       let remaining=multiply(bonus.dps,Math.min(MAX_OFFLINE_SECONDS,seconds)*bonus.offline);
@@ -544,15 +597,66 @@
       const raw=(t-this.lastFrameAt)/1000;
       this.lastFrameAt=t;
       if(raw<=0)return;
-      if(this.state.event && this.state.event.expiresAt<=t)this.expireEvent();
+      const s=this.state;
+      if(s.deadUntil){
+        if(t>=s.deadUntil)this.reviveHero();
+        return;
+      }
+      if(s.event && this.state.event.expiresAt<=t)this.expireEvent();
       if(raw>2){
+        // Offline DPS yields rewards safely without surprise lethal enemy hits.
+        s.nextEnemyAttackAt=t+enemyAttackInterval(s.mob);
         const result=this.grantOffline(Math.min(MAX_OFFLINE_SECONDS,raw));
         if(result.kills && document.visibilityState!=='hidden')this.addLog(`${fmt(result.kills)} abates em segundo plano: +${fmt(result.gold)} ouro.`,'☽','good');
       }else{
-        const dps=this.bonuses().dps;
-        if(dps>0)this.damageMob(multiply(dps,Math.min(raw,2)),false,false);
+        const b=this.bonuses();
+        s.heroHp=Math.min(b.maxHp,s.heroHp+b.regen*Math.min(raw,2));
+        if(document.visibilityState==='visible' && t>=s.nextEnemyAttackAt)this.enemyStrike();
+        if(!s.deadUntil && b.dps>0)this.damageMob(multiply(b.dps,Math.min(raw,2)),false,false);
       }
-      if(document.visibilityState==='visible' && !this.state.event && t>=this.state.nextEventAt)this.spawnEvent();
+      if(document.visibilityState==='visible' && !s.deadUntil && !this.state.event && t>=this.state.nextEventAt)this.spawnEvent();
+    }
+    enemyStrike() {
+      const s=this.state;
+      if(!s || s.deadUntil)return;
+      const b=this.bonuses();
+      const raw=enemyBaseDamage(s);
+      const mitigated=Math.max(1,Math.round(raw*100/(100+b.defense*4)));
+      s.heroHp=Math.max(0,s.heroHp-mitigated);
+      s.nextEnemyAttackAt=now()+enemyAttackInterval(s.mob);
+      const target=$('attackTarget'),hero=$('combatHero');
+      target.classList.remove('enemy-strike');void target.offsetWidth;target.classList.add('enemy-strike');
+      hero.classList.remove('hero-hurt');void hero.offsetWidth;hero.classList.add('hero-hurt');
+      this.floatHeroNumber(`−${fmt(mitigated)}`);
+      if(s.heroHp<=0)this.killHero();
+    }
+    floatHeroNumber(label,heal=false) {
+      const area=$('heroDamageLayer');
+      const node=document.createElement('span');node.className=`hero-damage-number ${heal?'healing':''}`;
+      node.textContent=label;area.append(node);
+      while(area.children.length>5)area.firstElementChild.remove();
+      setTimeout(()=>node.remove(),1050);
+    }
+    killHero() {
+      const s=this.state;
+      if(s.deadUntil)return;
+      s.heroHp=0;
+      s.deadUntil=now()+8000;
+      s.event=null;
+      s.mob=freshMob(s);
+      s.nextEventAt=now()+this.nextEventDelay();
+      this.addLog('Você foi derrotado! O inimigo recuperou toda a vida. Retorno em 8 segundos.','☠','epic');
+      this.toast('☠ DERROTADO — Retorno em 8 segundos.');
+      this.renderEvent();this.save();
+    }
+    reviveHero() {
+      const s=this.state;
+      if(!s?.deadUntil)return;
+      s.deadUntil=0;
+      s.heroHp=this.bonuses().maxHp;
+      s.nextEnemyAttackAt=now()+enemyAttackInterval(s.mob);
+      this.addLog('Você retornou ao combate com vida restaurada.','✚','good');
+      this.renderCore();
     }
     loop() {
       if(this.state){
@@ -567,13 +671,22 @@
       requestAnimationFrame(()=>this.loop());
     }
     attack() {
+      if(this.state?.deadUntil)return;
       if(!this.state || !$('dialogBackdrop').hidden)return;
       const b=this.bonuses(),critical=Math.random()<b.crit;
       const hit=multiply(b.click,critical?b.critDamage:1);
       this.damageMob(hit,true,critical);
+      const hero=$('combatHero');
+      hero.classList.remove('striking');
+      void hero.offsetWidth;
+      hero.classList.add('striking');
+      const slash=$('duelSlash');
+      slash.classList.remove('active');
+      void slash.offsetWidth;
+      slash.classList.add('active');
       const target=$('attackTarget');
       target.classList.remove('damaged');void target.offsetWidth;target.classList.add('damaged');
-      setTimeout(()=>target.classList.remove('damaged'),170);
+      setTimeout(()=>{target.classList.remove('damaged');hero.classList.remove('striking');slash.classList.remove('active');},360);
     }
     floatNumber(text,style='') {
       const layer=$('damageLayer');
@@ -586,7 +699,7 @@
     }
     damageMob(amount,fromClick,critical) {
       const s=this.state;
-      if(!s || amount<=0)return;
+      if(!s || s.deadUntil || amount<=0)return;
       if(fromClick)this.floatNumber(`${critical?'CRÍTICO! ':''}−${fmt(amount)}`,critical?'crit':'');
       let remaining=amount;
       let chain=0;
@@ -620,7 +733,7 @@
         this.toast('✦ MINIBOSS VENCIDO! A fase 6 foi liberada!','epic');
       }else if(kind==='boss'){
         progress.bossDefeated=true;progress.cleared=true;progress.stage=10;progress.kills=10;
-        this.dropItem('epico');
+        this.dropItem('lendario');
         this.addLog(`CHEFÃO ${name} DERROTADO! ${ZONES[s.zone].name} foi conquistada! +${fmt(gold)} ouro e +${fmt(xp)} XP.`,'◆','epic');
         this.toast(`CHEFÃO DERROTADO! ${s.zone===ZONES.length-1?'Todas as regiões conquistadas!':'Nova região liberada!'}`,'epic');
         travelNext=s.zone<ZONES.length-1;
@@ -641,6 +754,8 @@
           }
         }
         if(Math.random()<this.bonuses().drop)this.dropItem();
+        // Sucatas surgem independentemente dos equipamentos e são empilháveis.
+        if(Math.random()<.23)this.dropMaterial();
         this.addLog(`${name} derrotado. +${fmt(gold)} ouro · +${fmt(xp)} XP.`,'⚔');
       }
       if(!s.event && now()-s.lastEventAt>17000 && Math.random()<(.029+s.skills.r3*.007))this.spawnEvent();
@@ -654,13 +769,14 @@
         this.toast(`REGIÃO ${ZONES[s.zone].rune} — ${ZONES[s.zone].name}`,'good');
       }
       s.mob=freshMob(s,defeated.name);
+      s.nextEnemyAttackAt=now()+enemyAttackInterval(s.mob);
       this.renderCore();
       if(this.tab==='inventory'||this.tab==='zones')this.renderPanel();
     }
     nextEventDelay() {return Math.floor(randEventDelay()/(1+this.state.skills.r3*.14));}
     spawnEvent() {
       const s=this.state;
-      if(!s || s.event || document.visibilityState==='hidden')return;
+      if(!s || s.deadUntil || s.event || document.visibilityState==='hidden')return;
       const type=Math.random()<.55?'goblin':'chest';
       const maxHp=Math.max(18,Math.ceil(this.bonuses().click*8));
       s.event={type,hp:maxHp,maxHp,expiresAt:now()+11000+s.skills.r3*3000};
@@ -672,7 +788,7 @@
     }
     attackEvent() {
       const s=this.state;
-      if(!s?.event || !$('dialogBackdrop').hidden)return;
+      if(!s?.event || s.deadUntil || !$('dialogBackdrop').hidden)return;
       if(now()>=s.event.expiresAt){this.expireEvent();return;}
       const b=this.bonuses();
       const critical=Math.random()<b.crit;
@@ -716,79 +832,126 @@
       for(let i=0;i<weights.length;i++){pickValue-=weights[i];if(pickValue<=0)return RARITIES[i].id;}
       return 'comum';
     }
-    makeItem(forcedRarity=null) {
-      const s=this.state;
-      const rarity=RARITIES.find(r=>r.id===forcedRarity)||RARITIES.find(r=>r.id===this.rollRarity())||RARITIES[0];
-      const slot=pick(SLOTS);
-      const base=(1+s.level*.16+s.zone*.65)*rarity.multiplier;
-      const stats=slotStats();
-      const roll=()=>.84+Math.random()*.35;
-      if(slot==='weapon'){stats.click=Math.round(base*3.5*roll());if(rarity.multiplier>=1.95)stats.crit=Number((.007*rarity.multiplier*roll()).toFixed(4));}
-      if(slot==='armor'){stats.dps=Math.round(base*2.3*roll()*10)/10;if(rarity.multiplier>=3)stats.click=Math.round(base*roll());}
-      if(slot==='ring'){stats.gold=Number((base*.019*roll()).toFixed(3));stats.crit=Number((rarity.multiplier*.008*roll()).toFixed(4));}
-      if(slot==='relic'){stats.luck=Number((base*.013*roll()).toFixed(3));stats.dps=Math.round(base*1.2*roll()*10)/10;}
-      const prefix=pick(PREFIXES[rarity.id]);
-      const title=pick(EQUIPMENT_WORDS[slot]);
-      const name=prefix.startsWith('do ')||prefix.startsWith('da ')?`${title} ${prefix}`:`${title} ${prefix}`;
-      return {id:uid(),slot,rarity:rarity.id,name,level:s.level,stats,createdAt:now()};
+    chooseCatalogItem(forcedRarity=null,forcedKind=null) {
+      const s=this.state,zone=s.zone;
+      const regional=ITEM_CATALOG.filter(x=>catalogZone(x)===zone && (!forcedKind || x.tipo===forcedKind));
+      if(!regional.length) return null;
+      if(forcedKind==='material')return pick(regional);
+      // Never replace an epic reward with a common item merely because a zone lacks that rarity.
+      const all=regional.filter(x=>x.tipo!=='material');
+      let rarity=forcedRarity||this.rollRarity();
+      let options=all.filter(x=>CATALOG_RARITIES[x.raridade]===rarity);
+      if(!options.length){
+        const ranked=['comum','incomum','raro','epico','lendario'];
+        const wanted=ranked.indexOf(rarity);
+        const distance=(x)=>Math.abs(ranked.indexOf(CATALOG_RARITIES[x.raridade])-wanted);
+        const best=Math.min(...all.map(distance));
+        options=all.filter(x=>distance(x)===best);
+      }
+      return options.length?pick(options):null;
     }
-    dropItem(forceRarity=null) {
-      const item=this.makeItem(forceRarity);
+    makeItem(forcedRarity=null,forcedKind=null) {
       const s=this.state;
+      const def=this.chooseCatalogItem(forcedRarity,forcedKind);
+      if(!def)return null;
+      const kind=def.tipo==='material'?'material':def.tipo==='poção'?'potion':'equipment';
+      const slot=CATALOG_SLOTS[def.tipo]||null;
+      const rarity=CATALOG_RARITIES[def.raridade]||'comum';
+      const mult=(RARITIES.find(r=>r.id===rarity)||RARITIES[1]).multiplier;
+      const level=s.level;
+      const scale=(1+Math.min(250,level)*.13+s.zone*.75)*mult;
+      const roll=()=>.86+Math.random()*.28;
+      const stats=slotStats();
+      if(slot==='weapon'){stats.click=Math.max(1,Math.round(scale*3.4*roll()));if(mult>=1.95)stats.crit=Number((mult*.006*roll()).toFixed(4));}
+      if(slot==='helmet'){stats.click=Math.round(scale*.9*roll());stats.defense=Number((scale*2.5*roll()).toFixed(1));stats.health=Math.round(scale*8*roll());}
+      if(slot==='armor'){stats.defense=Number((scale*4.5*roll()).toFixed(1));stats.health=Math.round(scale*13*roll());if(mult>=3)stats.dps=Number((scale*.9*roll()).toFixed(1));}
+      if(slot==='ring'){stats.gold=Number((scale*.018*roll()).toFixed(3));stats.crit=Number((mult*.007*roll()).toFixed(4));}
+      if(slot==='necklace'){stats.click=Math.round(scale*.65*roll());stats.health=Math.round(scale*4.3*roll());stats.luck=Number((scale*.007*roll()).toFixed(3));}
+      if(slot==='relic'){stats.luck=Number((scale*.012*roll()).toFixed(3));stats.dps=Number((scale*1.1*roll()).toFixed(1));}
+      return {id:uid(),catalogId:def.id,kind,slot,rarity,name:def.nome,level,qty:1,stats,createdAt:now()};
+    }
+    addItem(item,guaranteed=false) {
+      if(!item)return null;
+      const s=this.state;
+      if(item.kind!=='equipment'){
+        const stack=s.inventory.find(x=>x.catalogId===item.catalogId && x.kind===item.kind);
+        if(stack){stack.qty=Math.min(99999,stack.qty+1);if(this.tab==='inventory')this.renderPanel();return stack;}
+      }
       if(s.inventory.length>=MAX_INVENTORY){
-        if(forceRarity){
-          // Event treasures are guaranteed: replace the weakest un-equipped item.
-          const protectedIds=new Set(Object.values(s.equipment).filter(Boolean));
-          const weakest=s.inventory.filter(i=>!protectedIds.has(i.id)).sort((a,b)=>
-            RARITIES.findIndex(r=>r.id===a.rarity)-RARITIES.findIndex(r=>r.id===b.rarity) || this.itemPower(a)-this.itemPower(b))[0];
-          if(weakest){
-            s.inventory=s.inventory.filter(i=>i.id!==weakest.id);
-            this.awardGold(this.itemPrice(weakest));
-            this.addLog(`Inventário cheio: ${weakest.name} foi vendido para receber o tesouro raro.`,'♢');
-          }
+        const protectedIds=new Set(Object.values(s.equipment).filter(Boolean));
+        const weakest=s.inventory.filter(x=>!protectedIds.has(x.id)).sort((a,b)=>
+          RARITIES.findIndex(r=>r.id===a.rarity)-RARITIES.findIndex(r=>r.id===b.rarity) || this.itemPower(a)-this.itemPower(b))[0];
+        if(guaranteed && weakest){
+          s.inventory=s.inventory.filter(x=>x.id!==weakest.id);
+          this.awardGold(this.itemPrice(weakest)*weakest.qty);
+          this.addLog(`Inventário cheio: ${weakest.name} vendido para receber o tesouro.`,'♢');
         }else{
-          const sell=this.itemPrice(item);
-          this.awardGold(sell);
-          this.addLog(`Inventário cheio: ${item.name} convertido em ${fmt(sell)} ouro.`,'♢');
+          this.awardGold(this.itemPrice(item));
+          this.addLog(`Inventário cheio: ${item.name} convertido em ouro.`,'♢');
           return null;
         }
       }
       s.inventory.push(item);
       if(['epico','lendario'].includes(item.rarity)){
         this.addLog(`${item.rarity==='lendario'?'LENDÁRIO':'ÉPICO'} encontrado: ${item.name}!`,'◆',item.rarity==='lendario'?'rare':'epic');
-        this.toast(`✦ ${item.name} encontrado!`,item.rarity==='lendario'?'rare':'epic');
-      }else if(s.inventory.length<6){this.addLog(`Equipamento encontrado: ${item.name}.`,'♢');}
+        this.toast(`✦ ${item.name} encontrado!`,'epic');
+      }else if(s.inventory.length<6)this.addLog(`Obtido: ${item.name}.`,'♢');
       $('inventoryCount').textContent=s.inventory.length;
       if(this.tab==='inventory')this.renderPanel();
       return item;
     }
+    dropMaterial() {return this.addItem(this.makeItem(null,'material'));}
+    dropItem(forceRarity=null) {return this.addItem(this.makeItem(forceRarity),Boolean(forceRarity));}
     itemPrice(item) {
-      return Math.max(4,Math.floor((6+item.level*4)*RARITIES.find(r=>r.id===item.rarity).multiplier*power(1.42,this.state.zone)));
+      const def=CATALOG_BY_ID.get(item.catalogId);
+      const area=def?catalogZone(def):this.state.zone;
+      if(item.kind==='material')return Math.max(1,Math.floor(2*power(1.9,area)));
+      if(item.kind==='potion')return Math.max(3,Math.floor(5*power(2.2,area)));
+      const rarity=RARITIES.find(r=>r.id===item.rarity)||RARITIES[1];
+      return Math.max(4,Math.floor((6+item.level*4)*rarity.multiplier*power(1.42,area)));
     }
     equipItem(id) {
       const item=this.state.inventory.find(x=>x.id===id);
-      if(!item)return;
+      if(!item || item.kind!=='equipment'||!SLOTS.includes(item.slot))return;
       if(this.state.equipment[item.slot]===id)this.state.equipment[item.slot]=null;
       else this.state.equipment[item.slot]=id;
-      this.renderPanel();this.renderCore();
+      this.state.heroHp=Math.min(this.state.heroHp,heroMaxHp(this.state));
+      this.renderPanel();this.renderCore();this.save();
+    }
+    usePotion(id) {
+      const s=this.state,item=s.inventory.find(x=>x.id===id);
+      if(!item||item.kind!=='potion')return;
+      if(s.deadUntil){this.toast('Você não pode beber poções enquanto estiver derrotado.');return;}
+      const b=this.bonuses();
+      if(s.heroHp>=b.maxHp-0.01){this.toast('Sua vida já está cheia.');return;}
+      const def=CATALOG_BY_ID.get(item.catalogId);
+      const area=def?catalogZone(def):0;
+      const ratio=Math.min(.85,.36+area*.085);
+      const healed=Math.min(b.maxHp-s.heroHp,Math.max(20,Math.ceil(b.maxHp*ratio)));
+      s.heroHp=Math.min(b.maxHp,s.heroHp+healed);
+      item.qty--;if(item.qty<=0)s.inventory=s.inventory.filter(x=>x.id!==item.id);
+      this.floatHeroNumber(`+${fmt(healed)} ♥`,true);
+      this.addLog(`${item.name}: +${fmt(healed)} de vida restaurada.`,'✚','good');
+      this.toast(`${item.name}: +${fmt(healed)} de cura!`,'good');
+      this.renderPanel();this.renderCore();this.save();
     }
     sellItem(id) {
       const s=this.state,index=s.inventory.findIndex(x=>x.id===id);
       if(index<0)return;
       const item=s.inventory[index];
-      if(s.equipment[item.slot]===id){this.toast('Desequipe este item antes de vendê-lo.');return;}
+      if(item.kind==='equipment'&&s.equipment[item.slot]===id){this.toast('Desequipe este item antes de vendê-lo.');return;}
       s.inventory.splice(index,1);
-      const price=this.itemPrice(item);this.awardGold(price);
-      this.toast(`Item vendido por ${fmt(price)} ouro.`);this.renderPanel();
+      const price=this.itemPrice(item)*item.qty;this.awardGold(price);
+      this.toast(`${item.qty} unidade(s) vendida(s) por ${fmt(price)} ouro.`);this.renderPanel();this.renderCore();this.save();
     }
     sellLowRarities() {
       const s=this.state;
       const equipped=new Set(Object.values(s.equipment).filter(Boolean));
-      const toSell=s.inventory.filter(i=>['comum','incomum'].includes(i.rarity)&&!equipped.has(i.id));
-      if(!toSell.length){this.toast('Nenhum equipamento comum/incomum disponível para venda.');return;}
-      let total=0;for(const item of toSell)total=add(total,this.itemPrice(item));
+      const toSell=s.inventory.filter(i=>['comum','incomum','sucata'].includes(i.rarity)&&!equipped.has(i.id));
+      if(!toSell.length){this.toast('Não há itens de baixo valor para vender.');return;}
+      let total=0;for(const item of toSell)total=add(total,this.itemPrice(item)*item.qty);
       const ids=new Set(toSell.map(x=>x.id));s.inventory=s.inventory.filter(i=>!ids.has(i.id));
-      this.awardGold(total);this.toast(`${toSell.length} itens vendidos por ${fmt(total)} ouro.`,'good');this.renderPanel();
+      this.awardGold(total);this.toast(`${toSell.length} tipos de item vendidos por ${fmt(total)} ouro.`,'good');this.renderPanel();this.renderCore();this.save();
     }
     upgradeCost(up) {
       return Math.max(1,Math.floor(multiply(up.base,power(up.growth,this.state.upgrades[up.id]))));
@@ -847,7 +1010,8 @@
       s.souls=add(s.souls,gain);
       s.level=1;s.xp=0;s.gold=0;s.zone=0;s.zoneKills=Array(ZONES.length).fill(0);s.zoneProgress=ZONES.map(freshProgress);
       s.upgrades=emptyRanks(UPGRADES);s.runKills=0;s.runGold=0;
-      s.rebirths++;s.event=null;s.mob=freshMob(s);s.nextEventAt=now()+this.nextEventDelay();
+      s.deadUntil=0;s.heroHp=heroMaxHp(s);
+      s.rebirths++;s.event=null;s.mob=freshMob(s);s.nextEnemyAttackAt=now()+enemyAttackInterval(s.mob);s.nextEventAt=now()+this.nextEventDelay();
       this.lastZoneRendered=-1;this.lastEventRendered='';
       this.changeTab('ascension');this.renderEverything();
       this.addLog(`RENASCIMENTO ${s.rebirths}: ${fmt(gain)} almas recebidas.`,'◆','epic');
@@ -860,6 +1024,7 @@
       if(index===this.state.zone)return;
       this.state.zone=index;
       this.state.mob=freshMob(this.state);
+      this.state.nextEnemyAttackAt=now()+enemyAttackInterval(this.state.mob);
       this.state.event=null;
       this.state.nextEventAt=now()+this.nextEventDelay();
       this.lastZoneRendered=-1;
@@ -907,6 +1072,21 @@
       $('dpsStat').textContent=fmt(b.dps,1);
       $('critStat').textContent=fmtPercent(b.crit);
       $('luckStat').textContent=fmtPercent(b.luck);
+      const hp=Math.min(s.heroHp,b.maxHp);
+      $('heroHPText').textContent=`${fmt(Math.ceil(hp))} / ${fmt(b.maxHp)} HP`;
+      $('heroHPFill').style.width=`${Math.max(0,Math.min(100,hp/b.maxHp*100))}%`;
+      $('arenaHPFill').style.width=`${Math.max(0,Math.min(100,hp/b.maxHp*100))}%`;
+      $('heroHPFill').classList.toggle('critical',hp/b.maxHp<.26);
+      $('heroRegeneration').textContent=`+${fmt(b.regen,1)}/s`;
+      $('defenseStat').textContent=fmt(b.defense,1);
+      $('hpStat').textContent=fmt(b.maxHp);
+      const dead=Boolean(s.deadUntil);
+      $('attackTarget').disabled=dead;
+      $('heroRespawn').hidden=!dead;
+      $('heroRespawnTime').textContent=dead?`${Math.ceil(Math.max(0,s.deadUntil-now())/1000)}s`:'';
+      $('combatHero').classList.toggle('defeated',dead);
+      $('enemyDamage').textContent=fmt(Math.max(1,Math.round(enemyBaseDamage(s)*100/(100+b.defense*4))));
+      $('enemyAttackCountdown').textContent=dead?'PAUSADO':`${(Math.max(0,s.nextEnemyAttackAt-now())/1000).toFixed(1)}s`;
       $('runKills').textContent=fmt(s.runKills);
       $('runGold').textContent=fmt(s.runGold);
       $('rebirths').textContent=fmt(s.rebirths);
@@ -932,8 +1112,13 @@
         artNode.replaceChildren(portrait);
       }
       $('mobLevel').textContent=bossKind==='boss'?'☠ CHEFÃO':bossKind==='miniboss'?'✦ MINIBOSS':`Nv. ${fmt(s.mob.level)}`;
-      $('battlefield').classList.toggle('boss-fight',bossKind==='boss');
-      $('battlefield').classList.toggle('miniboss-fight',bossKind==='miniboss');
+      const arena = $('battlefield');
+      arena.classList.toggle('boss-fight',bossKind==='boss');
+      arena.classList.toggle('miniboss-fight',bossKind==='miniboss');
+      arena.classList.toggle('final-boss-fight',bossKind==='boss' && s.zone===ZONES.length-1);
+      const frame = $('cameraState');
+      frame.textContent = bossKind === 'boss' ? (s.zone===ZONES.length-1 ? 'CONFRONTO FINAL' : 'ARENA DE CHEFÃO') :
+        bossKind === 'miniboss' ? 'ARENA DE MINIBOSS' : 'COMBATE • 2D';
       $('stageNumber').textContent=`FASE ${phase.stage} / 10`;
       $('stageKills').textContent=phase.cleared?'REGIÃO CONQUISTADA':bossKind==='boss'?'CHEFÃO FINAL':bossKind==='miniboss'?'MINIBOSS':`${phase.kills} / 10 INIMIGOS`;
       $('stageProgressFill').style.width=`${phase.cleared?100:phase.kills*10}%`;
@@ -1024,31 +1209,38 @@
       if(a.crit)lines.push(`+${fmtPercent(a.crit)} crítico`);
       if(a.gold)lines.push(`+${fmtPercent(a.gold)} ouro`);
       if(a.luck)lines.push(`+${fmtPercent(a.luck)} sorte`);
+      if(a.health)lines.push(`+${fmt(a.health)} vida`);
+      if(a.defense)lines.push(`+${fmt(a.defense,1)} defesa`);
       return lines.join(' · ') || 'Poder ancestral';
     }
-    itemPower(item) {const a=item.stats;return a.click+a.dps*2+a.crit*150+a.gold*30+a.luck*35;}
+    itemPower(item) {const a=item.stats;return a.click+a.dps*2+a.crit*150+a.gold*30+a.luck*35+a.health*.16+a.defense*3;}
     renderInventory() {
       const s=this.state;
       const equipment=SLOTS.map(slot=>{
         const item=s.inventory.find(x=>x.id===s.equipment[slot]);
-        return `<div class="equip-slot"><span class="equip-symbol">${SLOT_SYMBOLS[slot]}</span><div><small>${SLOT_NAMES[slot].toUpperCase()}</small><strong title="${esc(item?.name||'Vazio')}">${item?esc(item.name):'Vazio'}</strong></div></div>`;
+        const art=item?.catalogId?catalogImage(item.catalogId):null;
+        return `<div class="equip-slot">${art?`<img class="equip-thumbnail" src="${art}" alt="">`:`<span class="equip-symbol">${SLOT_SYMBOLS[slot]}</span>`}<div><small>${SLOT_NAMES[slot].toUpperCase()}</small><strong title="${esc(item?.name||'Vazio')}">${item?esc(item.name):'Vazio'}</strong></div></div>`;
       }).join('');
-      const filters=['all',...SLOTS];
-      const filterOptions=filters.map(f=>`<option value="${f}" ${this.inventoryFilter===f?'selected':''}>${f==='all'?'Todos os tipos':SLOT_NAMES[f]}</option>`).join('');
+      const filters=['all',...SLOTS,'material','potion'];
+      const filterOptions=filters.map(f=>`<option value="${f}" ${this.inventoryFilter===f?'selected':''}>${f==='all'?'Todos os tipos':f==='material'?'Materiais / sucata':f==='potion'?'Poções':SLOT_NAMES[f]}</option>`).join('');
       const sortOptions=[['new','Mais recentes'],['rarity','Maior raridade'],['power','Maior poder']].map(([key,label])=>`<option value="${key}" ${this.inventorySort===key?'selected':''}>${label}</option>`).join('');
-      const items=s.inventory.filter(i=>this.inventoryFilter==='all'||i.slot===this.inventoryFilter).slice().sort((a,b)=>{
+      const items=s.inventory.filter(i=>this.inventoryFilter==='all'||(i.kind==='equipment'?i.slot===this.inventoryFilter:i.kind===this.inventoryFilter)).slice().sort((a,b)=>{
         if(this.inventorySort==='rarity')return RARITIES.findIndex(x=>x.id===b.rarity)-RARITIES.findIndex(x=>x.id===a.rarity);
         if(this.inventorySort==='power')return this.itemPower(b)-this.itemPower(a);
         return b.createdAt-a.createdAt;
       });
-      return `<div class="section-headline"><div><h2>Arsenal do Errante</h2><p>Equipamentos são preservados após a ascensão. Espaço ocupado: ${s.inventory.length}/${MAX_INVENTORY}.</p></div></div>
+      const buff='';
+      return `<div class="section-headline"><div><h2>Arsenal do Errante</h2><p>100 itens temáticos · 6 slots de equipamento · sucatas e poções empilháveis. Ocupação: ${s.inventory.length}/${MAX_INVENTORY}.</p>${buff}</div></div>
         <div class="equipment-strip">${equipment}</div>
-        <div class="inventory-tools"><div class="filter-control"><label for="inventoryFilter">TIPO</label><select class="dark-select" id="inventoryFilter">${filterOptions}</select><label for="inventorySort">ORDEM</label><select class="dark-select" id="inventorySort">${sortOptions}</select></div><button type="button" class="subtle-button" data-sell-low>VENDER COMUNS + INCOMUNS</button></div>
+        <div class="inventory-tools"><div class="filter-control"><label for="inventoryFilter">TIPO</label><select class="dark-select" id="inventoryFilter">${filterOptions}</select><label for="inventorySort">ORDEM</label><select class="dark-select" id="inventorySort">${sortOptions}</select></div><button type="button" class="subtle-button" data-sell-low>VENDER SUCATA + COMUNS</button></div>
         ${items.length?`<div class="inventory-grid">${items.map(item=>{
-          const rarity=RARITIES.find(x=>x.id===item.rarity);
-          const equipped=s.equipment[item.slot]===item.id;
-          return `<article class="item-card rarity-${item.rarity} ${equipped?'equipped':''}"><div class="item-top"><div class="item-glyph">${SLOT_SYMBOLS[item.slot]}</div><div><div class="rarity">${rarity.label} · NV. ${item.level}</div><h3>${esc(item.name)}</h3></div></div><div class="item-stats">${esc(this.itemStatLines(item))}</div><div class="item-actions"><button type="button" data-equip="${esc(item.id)}">${equipped?'DESEQUIPAR':'EQUIPAR'}</button><button type="button" data-sell="${esc(item.id)}" ${equipped?'disabled':''}>VENDER · ${fmt(this.itemPrice(item))}</button></div></article>`;
-        }).join('')}</div>`:`<div class="empty-state"><div class="empty-glyph">◇</div><strong>Nenhum equipamento encontrado</strong>Derrote criaturas ou abra tesouros para conquistar recompensas.</div>`}`;
+          const rarity=RARITIES.find(x=>x.id===item.rarity)||RARITIES[1];
+          const equipped=item.kind==='equipment'&&s.equipment[item.slot]===item.id;
+          const image=item.catalogId?catalogImage(item.catalogId):null;
+          const detail=CATALOG_BY_ID.get(item.catalogId);
+          const type=item.kind==='equipment'?SLOT_NAMES[item.slot]:item.kind==='potion'?'Poção':'Material';
+          return `<article class="item-card rarity-${item.rarity} ${equipped?'equipped':''}"><div class="item-top"><div class="item-glyph">${image?`<img src="${image}" alt="" class="item-icon" loading="lazy">`:item.slot?SLOT_SYMBOLS[item.slot]:'◇'}</div><div><div class="rarity">${rarity.label} · ${esc(type)}${item.kind==='equipment'?' · NV. '+item.level:''}${item.qty>1?' · x'+fmt(item.qty):''}</div><h3>${esc(item.name)}</h3></div></div><div class="item-stats">${item.kind==='equipment'?esc(this.itemStatLines(item)):item.kind==='potion'?'Consumível: restaura vida do herói durante o combate.':'Material comum: pode ser vendido por ouro.'}${detail?`<small class="item-origin">${esc(detail.regiao)}</small>`:''}</div><div class="item-actions">${item.kind==='equipment'?`<button type="button" data-equip="${esc(item.id)}">${equipped?'DESEQUIPAR':'EQUIPAR'}</button>`:item.kind==='potion'?`<button type="button" data-use="${esc(item.id)}">UTILIZAR</button>`:''}<button type="button" data-sell="${esc(item.id)}" ${equipped?'disabled':''}>VENDER · ${fmt(this.itemPrice(item)*item.qty)}</button></div></article>`;
+        }).join('')}</div>`:`<div class="empty-state"><div class="empty-glyph">◇</div><strong>Nenhum item nesta categoria</strong>Derrote criaturas para encontrar equipamentos, materiais e poções.</div>`}`;
     }
     renderZones() {
       const s=this.state;
@@ -1100,6 +1292,7 @@
       if(b.dataset.qty){this.buyQuantity=b.dataset.qty==='max'?'max':integer(b.dataset.qty,1,1,10);this.renderPanel();return;}
       if(b.dataset.buy){this.buyUpgrade(b.dataset.buy);return;}
       if(b.dataset.equip){this.equipItem(b.dataset.equip);return;}
+      if(b.dataset.use){this.usePotion(b.dataset.use);return;}
       if(b.dataset.sell){this.sellItem(b.dataset.sell);return;}
       if(b.hasAttribute('data-sell-low')){this.sellLowRarities();return;}
       if(b.dataset.travel!==undefined){this.travelTo(integer(b.dataset.travel));return;}

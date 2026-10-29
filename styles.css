@@ -88,3 +88,161 @@
 .zone-bestiary .bestiary-creature.original-art:hover{background:#84653e3a}
 .monster-art img,.zone-bestiary img,.dialog-monster-preview{background:transparent;mix-blend-mode:normal}
 @media (prefers-reduced-motion:reduce){.monster-art img{animation:none!important}}
+
+/* HELLWARD V5 — side-on duel camera.  Keep clickable enemy as the original
+   #attackTarget so every existing game mechanic stays wired. */
+.battlefield{height:440px;transition:height .5s ease;background:#1c1a18}
+.battlefield .scene-floor{height:104px;background:linear-gradient(180deg,#6654454a 0%,#322b27ed 18%,#1a1716 77%,#100e10 100%)}
+.battlefield .scene-floor::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 22px,#0d0c0d35 23px 27px,transparent 28px 44px);opacity:.47}
+.battlefield .scene-sky{transform-origin:center bottom;transition:transform .65s ease,filter .65s ease}
+.battlefield .scene-back-mountain{transition:transform .65s ease}
+.battlefield.miniboss-fight{height:466px}
+.battlefield.boss-fight{height:486px}
+.battlefield.final-boss-fight{height:510px}
+/* Zooming the environment OUT increases the apparent field of view,
+   while separately composing large boss art foreground at full fidelity. */
+.battlefield.miniboss-fight .scene-sky{transform:scale(.92);filter:contrast(1.1)}
+.battlefield.boss-fight .scene-sky{transform:scale(.83);filter:contrast(1.16)}
+.battlefield.boss-fight .scene-back-mountain.left{transform:scale(.86)}
+.battlefield.boss-fight .scene-back-mountain.right{transform:scaleX(-1) scale(.86)}
+.battlefield .mob-info{z-index:12;top:18px;left:50%;width:min(332px,77%);text-align:center}
+.battlefield .mob-info .hp-track{background:#140e0d}
+.camera-state{position:absolute;top:18px;left:15px;z-index:13;padding:5px 8px;border:1px solid #967b4a66;background:#161313bd;color:#dfc092;font-size:9px;font-weight:700;letter-spacing:1.6px;text-shadow:0 1px 2px #000}
+.combat-hero{position:absolute;z-index:5;width:29%;height:235px;left:4%;bottom:38px;pointer-events:none;transform-origin:center bottom;transition:width .65s ease,left .65s ease,height .65s ease;filter:drop-shadow(0 11px 6px #000b)}
+.combat-hero-sprite{width:100%;height:100%;display:block;object-fit:contain;object-position:bottom center;animation:heroBreath 3.1s ease-in-out infinite;transform-origin:50% 84%}
+.hero-ground-shadow{position:absolute;bottom:16px;left:12%;right:12%;height:20px;background:#000c;border-radius:50%;filter:blur(9px);z-index:-1}
+.hero-ground-name{position:absolute;bottom:-20px;left:0;right:0;color:#e8ca95;text-align:center;font-size:10px;font-weight:800;letter-spacing:1.4px;text-shadow:0 2px 5px #000}
+.battlefield .attack-target{left:auto;right:3%;top:auto;bottom:30px;transform:none;width:49%;height:298px;transition:width .55s ease,height .55s ease,right .55s ease;z-index:4}
+.battlefield .monster-art{transform:none!important;display:block;position:absolute;inset:0;width:100%;height:100%;transition:filter .16s}
+.battlefield .monster-art img{display:block;object-fit:contain;object-position:bottom center;width:100%;height:100%;image-rendering:pixelated;filter:drop-shadow(0 10px 6px #000b)}
+.battlefield .mob-shadow{bottom:5px;left:12%;width:76%;height:20px}
+.battlefield .monster-aura{inset:30% 5% 10%;pointer-events:none}
+.battlefield .target-hint{bottom:-20px;font-size:9px;letter-spacing:1px}
+.battlefield .float-damage{left:72%;top:42%;z-index:22}
+.battlefield .event-overlay{right:12px;top:103px}
+.battlefield .damage-layer{z-index:20}
+.battlefield.miniboss-fight .combat-hero{width:26%;height:205px;left:2%;bottom:35px}
+.battlefield.miniboss-fight .attack-target{width:65%;height:349px;right:0;bottom:25px}
+.battlefield.boss-fight .combat-hero{width:23%;height:191px;left:1.5%;bottom:34px}
+.battlefield.boss-fight .attack-target{width:79%;height:380px;right:-2%;bottom:23px}
+.battlefield.boss-fight .target-hint{bottom:-15px}
+.battlefield.final-boss-fight .combat-hero{width:20%;height:169px;left:0;bottom:37px}
+.battlefield.final-boss-fight .attack-target{width:99%;height:415px;right:-7%;bottom:23px}
+.battlefield.final-boss-fight .monster-art img{object-fit:contain;object-position:bottom right}
+.battlefield.final-boss-fight .mob-info{width:min(400px,80%)}
+.battlefield.final-boss-fight .monster-aura{background:radial-gradient(ellipse at 66% 50%,#e4544235,transparent 67%)}
+.combat-hero.striking .combat-hero-sprite{animation:heroAttack .28s ease-out both}
+.duel-slash{position:absolute;z-index:6;left:43%;top:56%;width:27%;height:6px;opacity:0;pointer-events:none;transform:rotate(-16deg);background:linear-gradient(90deg,transparent,#f0c78b,#fffaf0,#e19d48,transparent);box-shadow:0 0 11px 2px #f1be62;border-radius:50%}
+.duel-slash.active{animation:duelSlash .3s cubic-bezier(.17,.67,.39,1) both}
+.battlefield.boss-fight .duel-slash{left:30%;width:40%;top:65%}
+@keyframes heroBreath{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes heroAttack{0%{transform:translate(0,0) rotate(0)}28%{transform:translate(9px,-4px) rotate(5deg)}55%{transform:translate(23px,2px) rotate(-8deg)}100%{transform:translate(0,0) rotate(0)}}
+@keyframes duelSlash{0%{opacity:0;transform:translateX(-36px) rotate(-19deg) scaleX(.2)}25%{opacity:.95}75%{opacity:.75}100%{opacity:0;transform:translateX(45px) rotate(-19deg) scaleX(1.1)}}
+@media(max-width:1250px){.battlefield{height:415px}.battlefield.miniboss-fight{height:446px}.battlefield.boss-fight{height:465px}.battlefield.final-boss-fight{height:480px}.combat-hero{height:211px}.battlefield .attack-target{height:285px}}
+@media(max-width:720px){.battlefield{height:400px}.battlefield.miniboss-fight{height:425px}.battlefield.boss-fight{height:445px}.battlefield.final-boss-fight{height:465px}.camera-state{font-size:8px;top:8px;left:8px;letter-spacing:.8px}.battlefield .mob-info{top:39px;width:min(270px,76%)}.combat-hero{height:190px;bottom:32px}.battlefield .attack-target{height:280px;bottom:25px}.battlefield.miniboss-fight .attack-target{height:320px}.battlefield.boss-fight .attack-target{height:354px}.battlefield.final-boss-fight .attack-target{height:375px}.battlefield .event-overlay{top:105px}}
+@media(max-width:520px){.battlefield{height:350px}.battlefield.miniboss-fight{height:379px}.battlefield.boss-fight{height:409px}.battlefield.final-boss-fight{height:420px}.battlefield .mob-info{top:32px;width:min(244px,88%)}.battlefield .camera-state{top:5px;left:6px;font-size:7px;padding:3px 5px}.combat-hero{left:0;width:32%;height:166px;bottom:30px}.hero-ground-name{font-size:7px;bottom:-15px;letter-spacing:.6px}.battlefield .attack-target{right:0;width:59%;height:235px;bottom:25px}.battlefield .target-hint{bottom:-16px;font-size:7px;letter-spacing:.2px}.battlefield.miniboss-fight .combat-hero{width:26%;height:149px;left:0}.battlefield.miniboss-fight .attack-target{width:72%;height:285px;right:-3%}.battlefield.boss-fight .combat-hero{width:23%;height:140px;left:0}.battlefield.boss-fight .attack-target{width:85%;height:322px;right:-7%}.battlefield.final-boss-fight .combat-hero{width:20%;height:127px}.battlefield.final-boss-fight .attack-target{width:100%;height:340px;right:-13%}.battlefield .event-overlay{top:98px}}
+@media(prefers-reduced-motion:reduce){.combat-hero-sprite,.combat-hero.striking .combat-hero-sprite,.duel-slash.active{animation:none!important}}
+/* Keep the sky as an edge-to-edge background during the pullback; only
+   foreground actors and distant mountains change framing. */
+.battlefield.miniboss-fight .scene-sky,.battlefield.boss-fight .scene-sky{transform:none;filter:contrast(1.08)}
+/* HELLWARD V6: protagonist PNG and catalogue artwork */
+.legacy-hero-icon{display:none!important}
+.hero-new-portrait{position:relative;z-index:1;width:min(96%,180px);height:185px;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 10px 8px #000a)}
+.combat-hero-sprite{image-rendering:auto;filter:drop-shadow(0 4px 3px #0009)}
+.equipment-strip{grid-template-columns:repeat(3,minmax(0,1fr))}
+.equip-slot{min-width:0}
+.equip-thumbnail{display:block;width:44px;height:48px;object-fit:contain;flex:0 0 44px;image-rendering:pixelated;filter:drop-shadow(0 2px 3px #000b)}
+.item-card .item-top{align-items:center;min-height:78px}
+.item-card .item-glyph{width:65px;height:67px;flex:0 0 65px;display:grid;place-items:center;overflow:hidden}
+.item-card .item-icon{width:60px;height:60px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 4px #0009)}
+.item-card .item-stats{min-height:42px}
+.item-origin{display:block;margin-top:6px;color:#a48d70;font-size:10px}
+.item-card.rarity-sucata{--rarity-text:#9e978e;--rarity-border:#544b45}
+.potion-active{display:inline-block;margin-top:8px;padding:6px 8px;color:#b3dfaa;background:#243421;border:1px solid #4b7651;font-size:11px}
+.item-actions button{min-width:0;flex:1}
+@media(max-width:1250px){.hero-new-portrait{height:165px}}
+@media(max-width:1000px){.hero-new-portrait{height:131px}}
+@media(max-width:720px){.equipment-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.hero-new-portrait{height:143px}.item-card .item-glyph{width:56px;flex-basis:56px}}
+
+
+/* HELLWARD V7 — survivor combat. Hero HP/defense and enemy attack telegraphs. */
+.hero-health-panel{padding:12px 13px 10px;margin:11px 0 5px;background:linear-gradient(120deg,#361d1c,#211716);border:1px solid #6a3733;border-radius:6px;box-shadow:inset 0 1px 0 #ffffff09}
+.hero-health-line,.hero-health-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;letter-spacing:.6px;color:#e7ad9b}
+.hero-health-line strong:last-child{font-size:12px;color:#ffdfc4;letter-spacing:0}
+.hero-health-track{height:13px;border:1px solid #a0554e;background:#160e0e;overflow:hidden;border-radius:3px;margin:7px 0 5px;box-shadow:inset 0 2px 4px #0007}
+.hero-health-track span{height:100%;display:block;background:linear-gradient(90deg,#9e2d32,#dc5958,#f29e79);transition:width .18s ease;box-shadow:0 0 8px #f95f4266}
+.hero-health-track span.critical{background:linear-gradient(90deg,#a91422,#eb333e);animation:lowHpPulse .75s ease-in-out infinite alternate}
+.hero-health-footer{font-size:9px;color:#b2a28d}.hero-health-footer strong{color:#9ed19e;font-size:10px}
+.hero-stat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.hero-arena-hp{position:absolute;z-index:13;left:3%;bottom:10px;width:27%;pointer-events:none;color:#ffddd2;text-align:center;font-size:9px;letter-spacing:.8px;font-weight:700;text-shadow:0 2px 4px #000}
+.hero-arena-hp>div{height:7px;background:#180e10;border:1px solid #7d3d3b;border-radius:4px;margin-top:3px;overflow:hidden}
+.hero-arena-hp i{display:block;width:100%;height:100%;background:linear-gradient(90deg,#a32d37,#fa7b68);transition:width .13s ease}
+.hero-damage-layer{pointer-events:none;position:absolute;z-index:24;left:0;bottom:32%;width:34%;height:34%;display:flex;align-items:center;justify-content:center}
+.hero-damage-number{position:absolute;font:900 27px var(--serif);color:#ff7973;text-shadow:2px 3px 2px #000,0 0 7px #f62829;animation:heroDamageFloat 1s ease-out forwards;white-space:nowrap}
+.hero-damage-number.healing{color:#90f09e;text-shadow:1px 2px 2px #000,0 0 7px #51d16c}
+@keyframes heroDamageFloat{0%{opacity:0;transform:translateY(18px) scale(.8)}20%{opacity:1;transform:translateY(0) scale(1.05)}100%{opacity:0;transform:translateY(-46px) scale(.95)}}
+@keyframes lowHpPulse{from{filter:brightness(.72)}to{filter:brightness(1.5)}}
+@keyframes heroKnockback{0%,100%{transform:translateX(0)}35%{transform:translateX(-12px) rotate(-4deg);filter:brightness(1.7) sepia(.65)}75%{transform:translateX(3px)}}
+@keyframes enemyLunge{0%,100%{transform:translateX(0)}40%{transform:translateX(-12px)}65%{transform:translateX(-5px)}}
+.combat-hero.hero-hurt:not(.defeated) .combat-hero-sprite{animation:heroKnockback .37s ease-out both}
+.battlefield .attack-target.enemy-strike{animation:enemyLunge .34s ease-out both}
+.combat-hero.defeated{opacity:.48;filter:grayscale(.9);transform:rotate(-7deg) translateY(9px)}
+.hero-respawn{position:absolute;z-index:30;top:30%;left:50%;transform:translateX(-50%);width:min(310px,88%);border:1px solid #b56b5c;border-radius:9px;padding:16px 14px;background:linear-gradient(130deg,#170c0dec,#2d1718f2);box-shadow:0 6px 38px #000c;text-align:center;display:grid;gap:7px;pointer-events:none}
+.hero-respawn strong{color:#ffc5af;font:700 20px var(--serif)}
+.hero-respawn span{color:#e9c6ad;font-size:13px}.hero-respawn small{color:#ab9c87;font-size:10px}
+.battlefield:has(.hero-respawn:not([hidden])) .attack-target{opacity:.65}
+@media(max-width:1000px){.hero-stat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.hero-stat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.hero-health-panel{padding:8px 10px;margin:8px 0 6px}.hero-arena-hp{font-size:7px;width:28%;bottom:7px}.hero-respawn strong{font-size:16px}.hero-damage-number{font-size:19px}}
+@media(prefers-reduced-motion:reduce){.combat-hero.hero-hurt .combat-hero-sprite,.battlefield .attack-target.enemy-strike,.hero-damage-number,.hero-health-track span.critical{animation:none}}
+
+@media(max-width:350px){.battlefield .attack-target{right:4%!important;width:55%}}
+
+
+/* HELLWARD — PARALLAX 2.5D | 6 regioes / 30 PNGs reais */
+.battlefield{background:#111013}
+.parallax-world,.parallax-front{position:absolute;inset:0;overflow:hidden;pointer-events:none;user-select:none;isolation:isolate}
+.parallax-world{z-index:0}
+.parallax-front{z-index:6}
+.parallax-layer{position:absolute;inset:-6%;background-repeat:no-repeat;background-position:center bottom;background-size:cover;image-rendering:pixelated;pointer-events:none;will-change:transform;transition:transform .55s ease-out}
+.parallax-world .p-mid,.parallax-front .p-foreground,.parallax-front .p-atmosphere{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 4%,#000 96%,transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 4%,#000 96%,transparent 100%)}
+.parallax-world .p-far{z-index:0;filter:saturate(1.02) contrast(1.03)}
+.parallax-world .p-mid{z-index:1;filter:saturate(1.04) contrast(1.04)}
+.parallax-world .p-ground{z-index:2;filter:saturate(1.03) contrast(1.06)}
+.parallax-front .p-foreground{z-index:0;opacity:.78;filter:contrast(1.05)}
+.parallax-front .p-atmosphere{z-index:1;opacity:.24;mix-blend-mode:screen;filter:blur(.2px);animation:hellwardFog 11s ease-in-out infinite alternate}
+@keyframes hellwardFog{0%{opacity:.16;filter:brightness(.9)}100%{opacity:.36;filter:brightness(1.06)}}
+.battlefield::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at center,transparent 58%,#0b0a0b30 100%)}
+.battlefield .combat-hero,.battlefield .attack-target{isolation:isolate}
+.battlefield .hero-respawn{z-index:16}
+@media(prefers-reduced-motion:reduce){.parallax-layer{transition:none!important}.parallax-front .p-atmosphere{animation:none!important;opacity:.18}}
+.battlefield.zone-0 .p-far{background-image:url("assets/backgrounds/campos-de-cinza/background_far.png");}
+.battlefield.zone-0 .p-mid{background-image:url("assets/backgrounds/campos-de-cinza/background_mid.png");}
+.battlefield.zone-0 .p-ground{background-image:url("assets/backgrounds/campos-de-cinza/battle_ground.png");}
+.battlefield.zone-0 .p-foreground{background-image:url("assets/backgrounds/campos-de-cinza/foreground.png");}
+.battlefield.zone-0 .p-atmosphere{background-image:url("assets/backgrounds/campos-de-cinza/atmosphere.png");}
+.battlefield.zone-1 .p-far{background-image:url("assets/backgrounds/bosque-profanado/background_far.png");}
+.battlefield.zone-1 .p-mid{background-image:url("assets/backgrounds/bosque-profanado/background_mid.png");}
+.battlefield.zone-1 .p-ground{background-image:url("assets/backgrounds/bosque-profanado/battle_ground.png");}
+.battlefield.zone-1 .p-foreground{background-image:url("assets/backgrounds/bosque-profanado/foreground.png");}
+.battlefield.zone-1 .p-atmosphere{background-image:url("assets/backgrounds/bosque-profanado/atmosphere.png");}
+.battlefield.zone-2 .p-far{background-image:url("assets/backgrounds/criptas-afogadas/background_far.png");}
+.battlefield.zone-2 .p-mid{background-image:url("assets/backgrounds/criptas-afogadas/background_mid.png");}
+.battlefield.zone-2 .p-ground{background-image:url("assets/backgrounds/criptas-afogadas/battle_ground.png");}
+.battlefield.zone-2 .p-foreground{background-image:url("assets/backgrounds/criptas-afogadas/foreground.png");}
+.battlefield.zone-2 .p-atmosphere{background-image:url("assets/backgrounds/criptas-afogadas/atmosphere.png");}
+.battlefield.zone-3 .p-far{background-image:url("assets/backgrounds/fortaleza-de-ferro/background_far.png");}
+.battlefield.zone-3 .p-mid{background-image:url("assets/backgrounds/fortaleza-de-ferro/background_mid.png");}
+.battlefield.zone-3 .p-ground{background-image:url("assets/backgrounds/fortaleza-de-ferro/battle_ground.png");}
+.battlefield.zone-3 .p-foreground{background-image:url("assets/backgrounds/fortaleza-de-ferro/foreground.png");}
+.battlefield.zone-3 .p-atmosphere{background-image:url("assets/backgrounds/fortaleza-de-ferro/atmosphere.png");}
+.battlefield.zone-4 .p-far{background-image:url("assets/backgrounds/fendas-infernais/background_far.png");}
+.battlefield.zone-4 .p-mid{background-image:url("assets/backgrounds/fendas-infernais/background_mid.png");}
+.battlefield.zone-4 .p-ground{background-image:url("assets/backgrounds/fendas-infernais/battle_ground.png");}
+.battlefield.zone-4 .p-foreground{background-image:url("assets/backgrounds/fendas-infernais/foreground.png");}
+.battlefield.zone-4 .p-atmosphere{background-image:url("assets/backgrounds/fendas-infernais/atmosphere.png");}
+.battlefield.zone-5 .p-far{background-image:url("assets/backgrounds/trono-do-crepusculo/background_far.png");}
+.battlefield.zone-5 .p-mid{background-image:url("assets/backgrounds/trono-do-crepusculo/background_mid.png");}
+.battlefield.zone-5 .p-ground{background-image:url("assets/backgrounds/trono-do-crepusculo/battle_ground.png");}
+.battlefield.zone-5 .p-foreground{background-image:url("assets/backgrounds/trono-do-crepusculo/foreground.png");}
+.battlefield.zone-5 .p-atmosphere{background-image:url("assets/backgrounds/trono-do-crepusculo/atmosphere.png");}
