@@ -202,20 +202,20 @@
 /* HELLWARD — PARALLAX 2.5D | 6 regioes / 30 PNGs reais */
 .battlefield{background:#111013}
 .parallax-world,.parallax-front{position:absolute;inset:0;overflow:hidden;pointer-events:none;user-select:none;isolation:isolate}
-.parallax-world{z-index:0}
-.parallax-front{z-index:6}
+.parallax-world{z-index:0;filter:brightness(.7) saturate(.72)}
+.parallax-front{z-index:1}
 .parallax-layer{position:absolute;inset:-6%;background-repeat:no-repeat;background-position:center bottom;background-size:cover;image-rendering:pixelated;pointer-events:none;will-change:transform;transition:transform .55s ease-out}
 .parallax-world .p-mid,.parallax-front .p-foreground,.parallax-front .p-atmosphere{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 4%,#000 96%,transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 4%,#000 96%,transparent 100%)}
 .parallax-world .p-far{z-index:0;filter:saturate(1.02) contrast(1.03)}
 .parallax-world .p-mid{z-index:1;filter:saturate(1.04) contrast(1.04)}
 .parallax-world .p-ground{z-index:2;filter:saturate(1.03) contrast(1.06)}
-.parallax-front .p-foreground{z-index:0;opacity:.78;filter:contrast(1.05)}
-.parallax-front .p-atmosphere{z-index:1;opacity:.24;mix-blend-mode:screen;filter:blur(.2px);animation:hellwardFog 11s ease-in-out infinite alternate}
-@keyframes hellwardFog{0%{opacity:.16;filter:brightness(.9)}100%{opacity:.36;filter:brightness(1.06)}}
-.battlefield::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at center,transparent 58%,#0b0a0b30 100%)}
+.parallax-front .p-foreground{z-index:0;opacity:.35;filter:brightness(.65) saturate(.65)}
+.parallax-front .p-atmosphere{z-index:1;opacity:.1;mix-blend-mode:screen;filter:blur(.2px);animation:hellwardFog 11s ease-in-out infinite alternate}
+@keyframes hellwardFog{0%{opacity:.06;filter:brightness(.9)}100%{opacity:.14;filter:brightness(1.06)}}
+.battlefield::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;background:linear-gradient(180deg,#080a1020 0%,#080a1040 55%,#080a1070 100%)}
 .battlefield .combat-hero,.battlefield .attack-target{isolation:isolate}
 .battlefield .hero-respawn{z-index:16}
-@media(prefers-reduced-motion:reduce){.parallax-layer{transition:none!important}.parallax-front .p-atmosphere{animation:none!important;opacity:.18}}
+@media(prefers-reduced-motion:reduce){.parallax-layer{transition:none!important}.parallax-front .p-atmosphere{animation:none!important;opacity:.1}}
 .battlefield.zone-0 .p-far{background-image:url("assets/backgrounds/campos-de-cinza/background_far.png");}
 .battlefield.zone-0 .p-mid{background-image:url("assets/backgrounds/campos-de-cinza/background_mid.png");}
 .battlefield.zone-0 .p-ground{background-image:url("assets/backgrounds/campos-de-cinza/battle_ground.png");}
@@ -246,3 +246,17 @@
 .battlefield.zone-5 .p-ground{background-image:url("assets/backgrounds/trono-do-crepusculo/battle_ground.png");}
 .battlefield.zone-5 .p-foreground{background-image:url("assets/backgrounds/trono-do-crepusculo/foreground.png");}
 .battlefield.zone-5 .p-atmosphere{background-image:url("assets/backgrounds/trono-do-crepusculo/atmosphere.png");}
+
+/* V7.3: scenery stays behind the actors; rim light follows sprite alpha. */
+.battlefield .combat-hero-sprite{
+  filter:brightness(1.28) contrast(1.06) drop-shadow(1px 0 0 #bbd5e7a6) drop-shadow(-1px 0 0 #bbd5e7a6) drop-shadow(0 0 7px #8cb9dc66) drop-shadow(0 7px 4px #000);
+}
+.battlefield .monster-art img{
+  filter:brightness(1.22) contrast(1.06) drop-shadow(1px 0 0 #f3c58f99) drop-shadow(-1px 0 0 #f3c58f99) drop-shadow(0 0 7px #d9914f55) drop-shadow(0 7px 4px #000);
+}
+.battlefield .hero-ground-name,.battlefield .target-hint{
+  color:#fff0cf;opacity:1;text-shadow:0 1px 2px #000,0 0 5px #000,0 0 9px #000;
+}
+
+/* The fixed arena HP label already identifies the hero. */
+.battlefield .hero-ground-name{display:none}
