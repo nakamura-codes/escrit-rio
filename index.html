@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#15120f">
+  <meta name="description" content="Cinzas do Crepúsculo — RPG idle de fantasia sombria. Evolua, conquiste tesouros e renasça mais forte.">
+  <title>Cinzas do Crepúsculo · Idle RPG</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <div class="ambient-grain" aria-hidden="true"></div>
+  <div class="app-frame" id="appFrame">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M32 3 55 14v24L32 61 9 38V14L32 3Z" stroke="currentColor" stroke-width="2"/><path d="M32 12 43 26l-11 24-11-24 11-14Z" fill="currentColor" opacity=".9"/><path d="M32 12v38M21 26h22" stroke="#24150c" stroke-width="2"/></svg></div>
+        <div><div class="brand-eyebrow">UM IDLE RPG DE FANTASIA SOMBRIA</div><div class="brand-name">CINZAS <span>DO</span> CREPÚSCULO</div></div>
+      </div>
+      <div class="top-resources">
+        <div class="resource-pill"><div class="resource-icon coin">✦</div><div><small>OURO</small><strong id="goldValue">0</strong></div></div>
+        <div class="resource-pill"><div class="resource-icon soul">◆</div><div><small>ALMAS</small><strong id="prestigeValue">0</strong></div></div>
+        <div class="resource-pill fragment-pill"><div class="resource-icon shard">✧</div><div><small>FRAGMENTOS</small><strong id="fragmentValue">0 / 10</strong></div></div>
+      </div>
+      <button class="profile-button" id="switchProfile" type="button" title="Trocar perfil"><span class="profile-avatar" aria-hidden="true">♜</span><span class="profile-copy"><small>AVENTUREIRO</small><strong id="profileName">—</strong></span><span class="profile-chevron">⌄</span></button>
+    </header>
+
+    <div class="underbar"><div class="underbar-left"><span class="status-dot"></span><span>O CREPÚSCULO NÃO DESCANSA</span><span class="divider-dot">✧</span><span id="runStatus">JORNADA I</span></div><div class="underbar-right">SALVAMENTO AUTOMÁTICO <span class="autosave-indicator" id="saveIndicator">●</span></div></div>
+
+    <main class="game-layout">
+      <aside class="left-column">
+        <section class="panel adventurer-panel">
+          <div class="panel-label"><span class="panel-ornament">✧</span> CRÔNICAS DO AVENTUREIRO <span class="panel-ornament">✧</span></div>
+          <div class="hero-portrait"><div class="hero-circle"></div><svg class="hero-icon" viewBox="0 0 180 180" fill="none" aria-hidden="true"><path d="m48 151 10-35 33-18 34 18 10 35" fill="#31251e" stroke="#876746" stroke-width="3"/><path d="m60 56 30-32 30 32-10 47-20 14-20-14-10-47Z" fill="#463a30" stroke="#b18a58" stroke-width="3"/><path d="M66 62 90 41l24 21-8 31-16 13-16-13-8-31Z" fill="#161c20" stroke="#a9875d" stroke-width="2"/><path d="m74 78 16 4 16-4" stroke="#d4a756" stroke-width="3"/><path d="m76 31 14-19 14 19M57 56l-18 18 20 2m62-20 18 18-20 2" fill="#a6804f" stroke="#dfb873" stroke-width="3"/><path d="m42 142 28-24 20 24 20-24 28 24" stroke="#9d794f" stroke-width="4"/><path d="m90 114-8 22 8 15 8-15-8-22Z" fill="#c99846"/></svg><div class="portrait-caption">O ERRANTE</div></div>
+          <div class="hero-level-line"><span>NÍVEL <strong id="levelValue">1</strong></span><span id="xpLabel">0 / 24 XP</span></div>
+          <div class="progress-bar xp-track" role="progressbar" aria-label="Experiência" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="xpProgress"><div class="progress-fill xp-fill" id="xpFill"></div></div>
+          <div class="hero-stat-grid">
+            <div class="stat-tile"><small>GOLPE</small><strong id="clickStat">2</strong><span>por clique</span></div>
+            <div class="stat-tile"><small>RITUAL</small><strong id="dpsStat">0</strong><span>por segundo</span></div>
+            <div class="stat-tile"><small>CRÍTICO</small><strong id="critStat">8%</strong><span>chance</span></div>
+            <div class="stat-tile"><small>FORTUNA</small><strong id="luckStat">0%</strong><span>sorte</span></div>
+          </div>
+          <div class="hero-footer"><span class="footer-rune">ᛟ</span><span>Todo poder tem seu preço.</span><span class="footer-rune">ᛟ</span></div>
+        </section>
+        <section class="panel journey-panel"><div class="panel-heading compact"><span class="eyebrow">REGISTRO DA JORNADA</span><span class="heading-glyph">✤</span></div><div class="journey-row"><span>Inimigos abatidos</span><strong id="runKills">0</strong></div><div class="journey-row"><span>Ouro conquistado</span><strong id="runGold">0</strong></div><div class="journey-row"><span>Renascimentos</span><strong id="rebirths">0</strong></div><div class="journey-row"><span>Zona atual</span><strong id="currentZoneShort">I</strong></div></section>
+      </aside>
+
+      <section class="battle-column" aria-label="Campo de batalha">
+        <section class="battle-panel">
+          <div class="battle-top"><div><div class="eyebrow gold-eyebrow">✦ &nbsp; EXPEDIÇÃO ATUAL &nbsp; ✦</div><h1 id="zoneName">Campos de Cinza</h1><p id="zoneSubtitle">Onde os primeiros condenados despertam.</p></div><div class="zone-crest" id="zoneCrest" aria-hidden="true">I</div></div>
+          <div class="battlefield zone-0" id="battlefield">
+            <div class="scene-sky"></div><div class="scene-moon"></div><div class="scene-back-mountain left"></div><div class="scene-back-mountain right"></div><div class="scene-ruin ruin-left"></div><div class="scene-ruin ruin-right"></div><div class="scene-floor"></div><div class="scene-mist mist-one"></div><div class="scene-mist mist-two"></div><div class="scene-ember ember-1"></div><div class="scene-ember ember-2"></div><div class="scene-ember ember-3"></div>
+            <div class="mob-info"><div class="mob-name-row"><span class="mob-icon">☠</span><strong id="mobName">Condenado</strong><span class="mob-rank" id="mobLevel">Nv. 1</span></div><div class="progress-bar hp-track"><div class="progress-fill hp-fill" id="mobHPFill"></div><span class="hp-numbers" id="mobHPText">30 / 30</span></div></div>
+            <button id="attackTarget" class="attack-target" type="button" aria-label="Atacar inimigo"><span class="monster-aura"></span><span class="mob-shadow"></span><span class="monster-art" id="monsterArt" aria-hidden="true"></span><span class="target-hint">✥ CLIQUE PARA ATACAR ✥</span></button>
+            <div class="event-overlay" id="eventOverlay" hidden><div class="event-ribbon">✦ EVENTO RARO ✦</div><button class="event-button" id="eventTarget" type="button"><span class="event-illustration" id="eventArt" aria-hidden="true">♜</span><span class="event-title" id="eventTitle">Goblin do Tesouro</span><span class="event-instruction">CLIQUE PARA SAQUEAR</span><div class="event-progress-track"><span id="eventHPFill"></span></div><span class="event-clock">⏳ <b id="eventTime">10.0s</b></span></button></div>
+            <div class="damage-layer" id="damageLayer" aria-hidden="true"></div>
+            <div class="battle-corner tl"></div><div class="battle-corner tr"></div><div class="battle-corner bl"></div><div class="battle-corner br"></div>
+          </div>
+          <div class="battle-bottom"><span class="battle-instruction">⚔ &nbsp; ATAQUE O INIMIGO OU DEIXE SEUS RITUAIS AGIREM</span><span class="battle-kill-count" id="zoneKillsLabel">0 ABATES NESTA ZONA</span></div>
+        </section>
+        <section class="milestone-banner" id="milestoneBanner"><div class="milestone-symbol">♜</div><div><strong id="milestoneTitle">O caminho começa aqui</strong><p id="milestoneDescription">Derrote 20 inimigos e alcance o nível 5 para desbloquear a próxima região.</p></div><span class="milestone-arrow">❯</span></section>
+      </section>
+
+      <aside class="right-column">
+        <section class="panel intel-panel"><div class="panel-heading"><div><div class="eyebrow">O CÓDICE SOMBRIO</div><h2>Visão da Batalha</h2></div><span class="heading-glyph">☽</span></div><div class="intel-block"><div class="intel-symbol">♢</div><div><small>INIMIGO ATUAL</small><strong id="intelMob">Condenado</strong><span id="intelReward">+12 ouro · +9 XP</span></div></div><div class="ornate-divider">✧</div><div class="intel-chance"><span>Chance de equipamento</span><strong id="dropChance">18%</strong></div><div class="intel-chance"><span>Bônus de ouro</span><strong id="goldBonus">+0%</strong></div><div class="intel-chance"><span>Almas ao renascer</span><strong id="prestigePreview">0</strong></div><div class="mini-tip">✦ &nbsp; Goblins e baús surgem durante o combate. Derrote-os antes que desapareçam!</div></section>
+        <section class="panel log-panel"><div class="panel-heading log-heading"><div><div class="eyebrow">SUSSURROS DO ABISMO</div><h2>Registro de Combate</h2></div><span class="live-indicator"><span></span> AO VIVO</span></div><div class="combat-log" id="combatLog" role="log" aria-live="off"></div><div class="log-footer">AS CRÔNICAS NÃO ESQUECEM <span>✧</span></div></section>
+      </aside>
+    </main>
+
+    <section class="management panel" aria-label="Gerenciamento do personagem">
+      <nav class="tab-nav" aria-label="Menu do jogo">
+        <button type="button" class="tab-button active" data-tab="upgrades" aria-selected="true"><span class="tab-icon">⚒</span><span>MELHORIAS</span></button>
+        <button type="button" class="tab-button" data-tab="inventory" aria-selected="false"><span class="tab-icon">♢</span><span>INVENTÁRIO <i id="inventoryCount">0</i></span></button>
+        <button type="button" class="tab-button" data-tab="zones" aria-selected="false"><span class="tab-icon">⚑</span><span>REGIÕES</span></button>
+        <button type="button" class="tab-button" data-tab="ascension" aria-selected="false"><span class="tab-icon">✧</span><span>ASCENSÃO</span></button>
+      </nav>
+      <div class="tab-body" id="tabBody" aria-live="polite"></div>
+    </section>
+    <footer class="site-footer"><span>✧ CINZAS DO CREPÚSCULO · EDIÇÃO ETERNA</span><span>JOGO LOCAL · SEM SERVIDOR · SALVO NO SEU NAVEGADOR</span><div class="footer-buttons"><button type="button" id="exportSave">↓ EXPORTAR JSON</button><button type="button" id="importSave">↑ IMPORTAR JSON</button></div></footer>
+  </div>
+
+  <div class="auth-screen" id="authScreen" role="dialog" aria-modal="true" aria-labelledby="authTitle"><div class="auth-glow"></div><div class="auth-card"><div class="auth-sigil">✥</div><div class="auth-overline">UM MUNDO ESQUECIDO AGUARDA</div><h1 id="authTitle">Cinzas do <em>Crepúsculo</em></h1><p>Forje sua lenda. Desafie a escuridão. Renasça além da morte.</p><div class="auth-divider"><span>✧</span></div><form id="createProfileForm"><label for="newProfileName">NOME DO AVENTUREIRO</label><div class="auth-create-row"><input id="newProfileName" name="name" maxlength="18" autocomplete="off" placeholder="Como será chamada sua lenda?" required><button type="submit" class="primary-button">INICIAR JORNADA ↗</button></div></form><div class="auth-saved" id="savedProfiles" hidden><div class="saved-heading">OU CONTINUE SUA JORNADA</div><div id="profileList" class="profile-list"></div></div><div class="auth-bottom"><span>Os seus dados permanecem neste dispositivo.</span><button type="button" id="importFromAuth">IMPORTAR UM SAVE ↥</button></div></div><div class="auth-footnote">✦ &nbsp; NENHUMA CONTA ONLINE OU SENHA NECESSÁRIA &nbsp; ✦</div></div>
+  <div class="modal-backdrop" id="dialogBackdrop" hidden><section class="dialog panel" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><div class="dialog-icon" id="dialogIcon">✦</div><div class="eyebrow" id="dialogEyebrow">CRÔNICA</div><h2 id="dialogTitle">A jornada continua</h2><p id="dialogText"></p><div class="dialog-actions" id="dialogActions"></div></section></div>
+  <div class="toast-stack" id="toastStack" role="status" aria-live="polite"></div>
+  <input type="file" id="saveFileInput" accept=".json,application/json" hidden>
+</body>
+</html>

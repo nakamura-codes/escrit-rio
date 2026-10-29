@@ -1,0 +1,924 @@
+/* CINZAS DO CREPÚSCULO | Vanilla JS | GitHub Pages / file:// compatible.
+   All game data is embedded locally; no dependencies, network requests or backend. */
+(() => {
+  'use strict';
+
+  const SAVE_VERSION = 1;
+  const PROFILE_INDEX_KEY = 'cinzas_profiles_v1';
+  const SAVE_PREFIX = 'cinzas_save_v1_';
+  const MAX_NUMBER = 1e250;
+  const MAX_LEVEL = 1500;
+  const MAX_RANK = 800;
+  const MAX_INVENTORY = 80;
+  const MAX_OFFLINE_SECONDS = 12 * 60 * 60;
+  const MAX_OFFLINE_KILLS = 30000;
+  const SAVE_INTERVAL = 10000;
+  const TABS = new Set(['upgrades', 'inventory', 'zones', 'ascension']);
+  const SLOTS = ['weapon', 'armor', 'ring', 'relic'];
+  const SLOT_NAMES = { weapon: 'Arma', armor: 'Armadura', ring: 'Anel', relic: 'Relíquia' };
+  const SLOT_SYMBOLS = { weapon: '⚔', armor: '♜', ring: '◉', relic: '✧' };
+  const RARITIES = [
+    {id: 'comum', label: 'Comum', multiplier: 1},
+    {id: 'incomum', label: 'Incomum', multiplier: 1.35},
+    {id: 'raro', label: 'Raro', multiplier: 1.95},
+    {id: 'epico', label: 'Épico', multiplier: 3},
+    {id: 'lendario', label: 'Lendário', multiplier: 5}
+  ];
+  const ZONES = [
+    {name: 'Campos de Cinza', subtitle: 'Onde os primeiros condenados despertam.', names: ['Condenado Errante', 'Devorador de Ossos', 'Sentinela Caída'], level: 1, kills: 0, rune: 'I', art: 'skeleton'},
+    {name: 'Bosque Profanado', subtitle: 'Raízes antigas escondem fome e maldição.', names: ['Fera Espinhosa', 'Rastejante Pútrido', 'Lobo da Praga'], level: 5, kills: 20, rune: 'II', art: 'beast'},
+    {name: 'Criptas Afogadas', subtitle: 'Os ecos dos esquecidos nunca se calam.', names: ['Espectro da Cripta', 'Alma Enregelada', 'Lamento Submerso'], level: 12, kills: 65, rune: 'III', art: 'wraith'},
+    {name: 'Fortaleza de Ferro', subtitle: 'O aço morto ainda guarda seus segredos.', names: ['Golem Ferrugem', 'Carcereiro Rúnico', 'Guardião de Basalto'], level: 23, kills: 150, rune: 'IV', art: 'golem'},
+    {name: 'Fendas Infernais', subtitle: 'Onde os pactos são escritos em brasas.', names: ['Arauto das Chamas', 'Demônio Carmesim', 'Flagelo Abissal'], level: 38, kills: 300, rune: 'V', art: 'demon'},
+    {name: 'Trono do Crepúsculo', subtitle: 'O fim de toda luz. O início de outra era.', names: ['Lich Imortal', 'Rei das Sombras', 'Devorador de Estrelas'], level: 60, kills: 600, rune: 'VI', art: 'lich'}
+  ];
+  const UPGRADES = [
+    {id: 'strike', icon: '⚔', title: 'Lâmina Afiada', desc: 'Reforce os golpes para causar mais dano a cada clique.', base: 12, growth: 1.16, effect: '+2,4 dano por nível'},
+    {id: 'ritual', icon: '✥', title: 'Ritual Arcano', desc: 'Invoca energia ancestral que fere inimigos automaticamente.', base: 22, growth: 1.175, effect: '+1,8 DPS por nível'},
+    {id: 'banner', icon: '✦', title: 'Estandarte Dourado', desc: 'Cada vitória rende mais ouro às suas reservas.', base: 75, growth: 1.20, effect: '+7% de ouro por nível'},
+    {id: 'focus', icon: '✧', title: 'Olhar do Predador', desc: 'Aprimora a precisão dos seus ataques críticos.', base: 110, growth: 1.23, effect: '+0,7% de crítico por nível'}
+  ];
+  const SKILL_PATHS = [
+    {id: 'warrior', name: 'Caminho do Guerreiro', subtitle: 'FORÇA • PRECISÃO • PODER', icon: '⚔'},
+    {id: 'sage', name: 'Caminho do Sábio', subtitle: 'RITUAL • OURO • TEMPO', icon: '✥'},
+    {id: 'raider', name: 'Caminho do Saqueador', subtitle: 'SORTE • TESOURO • ALMAS', icon: '✧'}
+  ];
+  const SKILLS = [
+    {id: 'w1', path:'warrior', icon:'⚔', name:'Golpe Ancestral', desc:'+20% dano de clique/nível', max:10, cost:1, growth:1.7},
+    {id: 'w2', path:'warrior', icon:'✣', name:'Sangue Frio', desc:'+2% chance crítica/nível', max:8, cost:2, growth:1.8, req:'w1', reqRank:1},
+    {id: 'w3', path:'warrior', icon:'✦', name:'Fio do Destino', desc:'+22% dano crítico/nível', max:8, cost:3, growth:1.8, req:'w2', reqRank:2},
+    {id: 'w4', path:'warrior', icon:'♜', name:'Caçador de Tesouros', desc:'+35% dano em eventos/nível', max:5, cost:6, growth:2, req:'w3', reqRank:2},
+    {id: 's1', path:'sage', icon:'☽', name:'Ecos Arcanos', desc:'+25% de DPS/nível', max:10, cost:1, growth:1.7},
+    {id: 's2', path:'sage', icon:'◈', name:'Tempo Retido', desc:'+12% de ganho offline/nível', max:8, cost:2, growth:1.8, req:'s1', reqRank:1},
+    {id: 's3', path:'sage', icon:'✥', name:'Alquimia Solar', desc:'+10% de ouro/nível', max:8, cost:3, growth:1.85, req:'s2', reqRank:2},
+    {id: 's4', path:'sage', icon:'✶', name:'Tempestade Etérea', desc:'+30% de DPS/nível', max:6, cost:6, growth:2, req:'s3', reqRank:2},
+    {id: 'r1', path:'raider', icon:'◇', name:'Mãos Afortunadas', desc:'+6% de sorte/nível', max:10, cost:1, growth:1.7},
+    {id: 'r2', path:'raider', icon:'✧', name:'Olhar do Abismo', desc:'Melhora raridades de itens', max:8, cost:2, growth:1.8, req:'r1', reqRank:1},
+    {id: 'r3', path:'raider', icon:'♢', name:'Ímã de Relíquias', desc:'Eventos +frequentes e +3s', max:6, cost:3, growth:1.9, req:'r2', reqRank:2},
+    {id: 'r4', path:'raider', icon:'◆', name:'Legado Eterno', desc:'+12% almas no renascer/nível', max:6, cost:6, growth:2, req:'r3', reqRank:2}
+  ];
+  const EQUIPMENT_WORDS = {
+    weapon: ['Espada', 'Machado', 'Lâmina', 'Adaga', 'Gadanha'],
+    armor: ['Armadura', 'Couraça', 'Manto', 'Peitoral', 'Veste'],
+    ring: ['Anel', 'Sinete', 'Selo', 'Aliança', 'Aro'],
+    relic: ['Amuleto', 'Talismã', 'Ídolo', 'Relicário', 'Orbe']
+  };
+  const PREFIXES = {comum:['Gasto','Rústico','Esquecido'], incomum:['Temperado','Velado','Vigilante'], raro:['Rúnico','Sombrio','Venerável'], epico:['Espectral','Imperial','Profanado'], lendario:['Eterno','do Ocaso','da Última Aurora']};
+
+  const ART = {
+    skeleton: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bone" x2=".8" y2="1"><stop stop-color="#e3d1a9"/><stop offset="1" stop-color="#817b6f"/></linearGradient><linearGradient id="iron" x2="1" y2="1"><stop stop-color="#75756e"/><stop offset="1" stop-color="#2b3438"/></linearGradient></defs><path d="M85 109 52 132l-25 66 29 6 31-45M171 107l35 32 24 57-30 11-36-46" fill="#42413c" stroke="#1a191a" stroke-width="7"/><path d="m88 92-24 42 15 75 43 17 59-21 14-72-22-41Z" fill="url(#iron)" stroke="#191a1d" stroke-width="8"/><path d="m103 125 28 18 28-18-3 69-25 21-25-21Z" fill="#282d2d" stroke="#9d8768" stroke-width="4"/><path d="m101 91-17-22 13-45 27-14 36 14 13 45-18 22Z" fill="url(#bone)" stroke="#272b2d" stroke-width="6"/><path d="M96 63 114 54 122 72 102 79ZM165 63 147 54 139 72 159 79Z" fill="#1d1819"/><path d="M105 68h13m27 0h12" stroke="#eaa85f" stroke-width="4"/><path d="m130 70-9 17h18Z" fill="#3b3230"/><path d="M113 88v13m11-13v13m11-13v13m11-13v13" stroke="#55443b" stroke-width="5"/><path d="m82 204 3 44-20 28 47 1 15-56m47-17-3 44 22 28-47 1-17-56" fill="#45423c" stroke="#1b1d20" stroke-width="8"/><path d="m34 189-9 48 15 10 19-41m165-4 15 37-16 13-20-37" fill="url(#bone)" stroke="#292929" stroke-width="4"/><path d="M205 100 235 24 244 14 240 52l-22 77" fill="#a4b2b0" stroke="#1e2526" stroke-width="6"/><path d="m202 127 29 12" stroke="#b9945e" stroke-width="9"/></svg>`,
+    beast: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="beast" x2="1" y2="1"><stop stop-color="#828c68"/><stop offset="1" stop-color="#263a31"/></linearGradient></defs><path d="M47 192 19 158 8 94 46 124l23 38m144 38 31-46 6-63-36 42-24 37" fill="#394c34" stroke="#17251e" stroke-width="7"/><path d="M67 159 46 195l-12 71h42l23-68m95-37 23 40 11 64h-42l-24-72" fill="#3f5140" stroke="#19261f" stroke-width="8"/><path d="m47 103 17-53 31 35 25-19 20 22 25-22 25 22 29-35 15 56-24 100-70 39-71-41Z" fill="url(#beast)" stroke="#1c2a26" stroke-width="9"/><path d="m61 117 31-20 34 30-27 19Zm135 0-31-20-34 30 27 19Z" fill="#aece86" stroke="#213b2b" stroke-width="6"/><path d="M110 171 138 153 166 172l-29 30Z" fill="#171c19"/><path d="m108 203 18 30 12-28 13 28 16-30" fill="#ddd4b0" stroke="#26382a" stroke-width="5"/><path d="m77 87-34-57 4 72m129-15 32-57-3 73" stroke="#aeb796" stroke-width="10"/><path d="m39 266-17 20h67l-17-20m115 0-15 20h67l-17-20" fill="#9da584"/></svg>`,
+    wraith: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="shade" x2="1" y2="1"><stop stop-color="#6a84a2"/><stop offset="1" stop-color="#161b33"/></linearGradient></defs><path d="M123 13 64 48 40 111 45 206 19 274 62 257 91 281 126 256 158 287 194 253 244 276 208 205 218 111 186 48Z" fill="url(#shade)" stroke="#172130" stroke-width="9"/><path d="m126 25-48 45-9 66 58 42 65-42-15-66Z" fill="#111824" stroke="#9eadd0" stroke-width="4"/><path d="m87 109 28-12 10 18-29 14m78-20-29-12-10 18 29 14" fill="#a5d9f0"/><path d="m103 146 25 17 27-17" fill="none" stroke="#6997b5" stroke-width="6"/><path d="M57 132 13 173 31 201l39-36m118-33 59 37-18 32-46-33" stroke="#7c9cbb" stroke-width="17"/><path d="M59 218Q125 267 203 219" fill="none" stroke="#91bdd2" stroke-width="5" opacity=".45"/><circle cx="125" cy="118" r="82" stroke="#91c4d7" opacity=".13" stroke-width="6"/></svg>`,
+    golem: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rock" x2="1" y2="1"><stop stop-color="#a19583"/><stop offset="1" stop-color="#393e40"/></linearGradient></defs><path d="m38 112-30 37 4 72 38 10 36-75m133-44 30 37-4 72-38 10-36-75" fill="#585952" stroke="#252729" stroke-width="9"/><path d="M65 83 88 41h85l24 42 7 105-39 45H89l-38-45Z" fill="url(#rock)" stroke="#242a2a" stroke-width="10"/><path d="m84 54 22-37h48l22 37-11 64H95Z" fill="#666b68" stroke="#272b2a" stroke-width="8"/><path d="m94 77 26 4-8 14H92m75-18-27 4 9 14h20" fill="#ffc184" stroke="#493a2e" stroke-width="5"/><path d="m110 107 20 8 20-8-7 20h-27Z" fill="#29292c"/><path d="m89 136 39 21 43-21-12 62-29 18-29-18Z" fill="#4a4c49" stroke="#c5a26a" stroke-width="5"/><path d="m79 220-13 60h49l15-57m45-3 17 60h-49l-14-57" fill="#5d605d" stroke="#222526" stroke-width="9"/><path d="m8 220 12 37 39-2 3-29m186-6-12 37-39-2-3-29" fill="#77746e" stroke="#282a2b" stroke-width="6"/><path d="M130 143v49M100 164h60" stroke="#d69c67" stroke-width="5"/></svg>`,
+    demon: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hell" x2="1" y2="1"><stop stop-color="#aa5b47"/><stop offset="1" stop-color="#421d29"/></linearGradient></defs><path d="M79 123 9 50l18 84-23 72 78-28m98-55 70-73-18 84 23 72-78-28" fill="#5c2630" stroke="#23151d" stroke-width="8"/><path d="m87 80-35-55 6 69m115-14 34-55-6 69" fill="#c39c79" stroke="#38232a" stroke-width="6"/><path d="m70 98 35-65h52l35 65-12 110-50 31-49-31Z" fill="url(#hell)" stroke="#321b1d" stroke-width="9"/><path d="m90 107 30 7-5 19-26-9m81-17-30 7 5 19 26-9" fill="#ffbb68" stroke="#55261f" stroke-width="6"/><path d="m103 170 27-18 27 18-14 20h-25Z" fill="#2b171c"/><path d="m115 181 7 23 8-12 8 12 7-23" fill="#edc8a0"/><path d="m79 202-29 64h49l31-33m52-31 27 64h-49l-30-33" fill="#7b3432" stroke="#361b1e" stroke-width="8"/><path d="M64 130 25 181l15 21 44-29m112-43 39 51-15 21-44-29" stroke="#8c4641" stroke-width="16"/><path d="M43 206 22 219m194-13 21 13" stroke="#d8a17b" stroke-width="8"/></svg>`,
+    lich: `<svg viewBox="0 0 260 295" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="king" x2="1" y2="1"><stop stop-color="#726186"/><stop offset="1" stop-color="#231b38"/></linearGradient></defs><path d="m70 76-14-64 35 32 35-42 35 42 42-32-12 64Z" fill="#b5a27a" stroke="#382f37" stroke-width="7"/><path d="m53 92 24-19 106 0 25 19-6 134 33 56-56-24-48 26-47-26-61 24 36-56Z" fill="url(#king)" stroke="#1b182d" stroke-width="8"/><path d="m90 79-10 47 14 39 36 20 36-20 15-39-11-47Z" fill="#b6b5af" stroke="#2c303b" stroke-width="7"/><path d="m91 115 27-8-5 24-24-6m81-10-27-8 5 24 24-6" fill="#c79bfa" stroke="#51415c" stroke-width="6"/><path d="m116 141 14 15 14-15m-30 20v12m11-12v12m11-12v12m11-12v12" stroke="#53495b" stroke-width="5"/><path d="M77 181 45 223l-25-18m161-24 32 42 25-18" fill="none" stroke="#8a7794" stroke-width="15"/><path d="M218 208V50m-21 11 21-31 21 31-21 25Z" fill="#ba9edb" stroke="#4b3a60" stroke-width="7"/><path d="M95 198 130 217 168 198l-36 54Z" fill="#3b304f" stroke="#b59bc3" stroke-width="5"/><circle cx="130" cy="210" r="9" fill="#caaff1"/></svg>`
+  };
+
+  const EVENT_ART = {
+    goblin: `<svg viewBox="0 0 85 78" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M19 33 3 19l17-1 11 14m35 1 16-14-18-1-10 14" fill="#88ac52" stroke="#314721" stroke-width="3"/><path d="M18 30Q20 8 42 7q25 2 25 25l-6 27-18 14-19-14Z" fill="#70994b" stroke="#263d20" stroke-width="4"/><path d="M20 28 32 23l10 10-13 9Zm45 0-13-5-10 10 13 9Z" fill="#f2c76c" stroke="#283a20" stroke-width="3"/><path d="m41 43-7 12 8 4 8-4Z" fill="#4b642f"/><path d="m26 61 16 9 17-9" stroke="#e5c28b" stroke-width="3"/><circle cx="13" cy="61" r="12" fill="#d4a043" stroke="#ffe091" stroke-width="3"/><path d="M13 54v14m-5-10h10" stroke="#ffeb9d" stroke-width="2"/></svg>`,
+    chest: `<svg viewBox="0 0 85 78" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 32 17 14 42 5l25 9 4 18Z" fill="#8e562b" stroke="#f1c96a" stroke-width="4"/><path d="M12 32h61v35H12Z" fill="#7e4525" stroke="#f0b956" stroke-width="4"/><path d="M12 41h61" stroke="#edc065" stroke-width="6"/><path d="M28 14v53m29-53v53" stroke="#d4a256" stroke-width="5"/><path d="M36 32h13v23H36Z" fill="#ffdd79" stroke="#986331" stroke-width="2"/><path d="M42 5V0m-18 7-5-5m47 5 5-5" stroke="#ffe8a8" stroke-width="2"/><circle cx="42" cy="44" r="4" fill="#734324"/></svg>`
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const now = () => Date.now();
+  const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const number = (v, fallback = 0, min = 0, max = MAX_NUMBER) => {
+    const n = typeof v === 'number' ? v : Number(v);
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+  };
+  const integer = (v, fallback = 0, min = 0, max = MAX_NUMBER) => Math.floor(number(v, fallback, min, max));
+  const add = (a, b) => Math.min(MAX_NUMBER, Math.max(0, a) + Math.max(0, b));
+  const multiply = (a, b) => (a <= 0 || b <= 0) ? 0 : (a >= MAX_NUMBER / b ? MAX_NUMBER : a * b);
+  const power = (b, e) => {
+    if (b <= 0) return 0;
+    const exponent = Math.log(b) * e;
+    return exponent >= Math.log(MAX_NUMBER) ? MAX_NUMBER : Math.min(MAX_NUMBER, Math.exp(exponent));
+  };
+  const safeName = (v, max = 42) => String(v == null ? '' : v).replace(/[\x00-\x1f<>]/g, '').trim().slice(0, max);
+  const esc = (v) => String(v).replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const fmt = (v, decimals = 0) => {
+    const n = number(v);
+    if (n < 1000) return n.toLocaleString('pt-BR', {maximumFractionDigits: decimals});
+    const units = ['','k','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc'];
+    const group = Math.floor(Math.log10(n) / 3);
+    if (group >= units.length) return n.toExponential(2).replace('e+', 'e');
+    const scaled = n / (10 ** (group * 3));
+    return `${scaled.toLocaleString('pt-BR',{maximumFractionDigits:scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2})}${units[group]}`;
+  };
+  const fmtPercent = (n) => `${(number(n) * 100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`;
+  const uid = () => (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(36).slice(2,12)}`;
+  const xpNeeded = (lv) => Math.floor(Math.min(MAX_NUMBER, 24 * power(1.21, Math.max(0, lv-1)) + lv * 7));
+  const slotStats = () => ({click:0, dps:0, crit:0, gold:0, luck:0});
+  const emptyRanks = (table) => Object.fromEntries(table.map(x => [x.id, 0]));
+  const timeLabel = () => new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+  const randEventDelay = () => rand(39000, 75000);
+  const validZone = (z) => Math.min(ZONES.length-1, integer(z, 0, 0, ZONES.length-1));
+  const rewardGold = (state) => Math.floor(multiply(12 * power(2.35, state.zone), 1 + Math.min(30000, state.zoneKills[state.zone]) * .075));
+  const rewardXp = (state) => Math.floor(multiply(9 * power(1.95, state.zone), 1 + Math.min(30000, state.zoneKills[state.zone]) * .05));
+  const maxMobHp = (state) => Math.floor(multiply(28 * power(2.9, state.zone), 1 + Math.min(30000, state.zoneKills[state.zone]) * .023));
+  const unlockedZone = (s, z) => s.level >= ZONES[z].level && s.runKills >= ZONES[z].kills;
+  const freshMob = (s) => {
+    const maxHp = Math.max(1, maxMobHp(s));
+    return {name:pick(ZONES[s.zone].names),hp:maxHp,maxHp, level:1 + s.zone * 9 + Math.floor(s.zoneKills[s.zone]/12)};
+  };
+  const newState = (name) => {
+    const s = {version:SAVE_VERSION,name:safeName(name,18) || 'Errante',createdAt:now(),lastSeen:now(),level:1,xp:0,gold:0,souls:0,shards:0,zone:0,zoneKills:Array(ZONES.length).fill(0),upgrades:emptyRanks(UPGRADES),skills:emptyRanks(SKILLS),inventory:[],equipment:Object.fromEntries(SLOTS.map(x=>[x,null])),mob:null,event:null,nextEventAt:now()+randEventDelay(),lastEventAt:0,runKills:0,runGold:0,lifetimeKills:0,rebirths:0};
+    s.mob = freshMob(s);
+    return s;
+  };
+  function normalizeItem(item) {
+    if (!item || typeof item !== 'object' || !SLOTS.includes(item.slot)) return null;
+    if (!RARITIES.some(r=>r.id === item.rarity)) return null;
+    const stats = slotStats();
+    for (const key of Object.keys(stats)) stats[key] = number(item.stats?.[key],0,0,1e8);
+    return {id:String(item.id ?? '').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,90) || uid(),slot:item.slot,rarity:item.rarity,name:safeName(item.name,75) || 'Relíquia sem Nome',level:integer(item.level,1,1,MAX_LEVEL),stats,createdAt:integer(item.createdAt,now(),0,now()+100000)};
+  }
+  function normalizeSave(raw, fallbackName) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw) || raw.version > SAVE_VERSION) throw Error('Versão de save incompatível.');
+    const s = newState(fallbackName);
+    s.name = safeName(raw.name,18) || safeName(fallbackName,18) || 'Errante';
+    s.createdAt = integer(raw.createdAt,now(),0,now());
+    s.lastSeen = integer(raw.lastSeen,now(),0,now());
+    s.level = integer(raw.level,1,1,MAX_LEVEL);
+    s.xp = number(raw.xp,0);
+    s.gold = number(raw.gold);
+    s.souls = integer(raw.souls);
+    s.shards = integer(raw.shards,0,0,9);
+    s.runKills = integer(raw.runKills,0,0,1e10);
+    s.runGold = number(raw.runGold);
+    s.lifetimeKills = integer(raw.lifetimeKills,0,0,1e12);
+    s.rebirths = integer(raw.rebirths,0,0,1e8);
+    for (const x of UPGRADES) s.upgrades[x.id] = integer(raw.upgrades?.[x.id],0,0,MAX_RANK);
+    for (const x of SKILLS) s.skills[x.id] = integer(raw.skills?.[x.id],0,0,x.max);
+    if (Array.isArray(raw.zoneKills)) s.zoneKills = ZONES.map((_,i)=>integer(raw.zoneKills[i],0,0,1e10));
+    s.zone = validZone(raw.zone);
+    if (!unlockedZone(s,s.zone)) s.zone = ZONES.reduce((z,_,i)=>unlockedZone(s,i) ? i : z,0);
+    const seen = new Set();
+    if (Array.isArray(raw.inventory)) for (const entry of raw.inventory.slice(0,MAX_INVENTORY)) {
+      const item = normalizeItem(entry);
+      if (item && !seen.has(item.id)) {s.inventory.push(item);seen.add(item.id);}
+    }
+    for (const slot of SLOTS) {
+      const id = safeName(raw.equipment?.[slot],90);
+      s.equipment[slot] = s.inventory.some(i=>i.id===id && i.slot===slot) ? id : null;
+    }
+    s.mob = freshMob(s);
+    if (raw.mob && typeof raw.mob === 'object') {
+      const maxHp = Math.max(1,maxMobHp(s));
+      s.mob = {name:ZONES[s.zone].names.includes(raw.mob.name) ? raw.mob.name : pick(ZONES[s.zone].names),hp:number(raw.mob.hp,maxHp,0,maxHp),maxHp,level:1+s.zone*9+Math.floor(s.zoneKills[s.zone]/12)};
+      if (!s.mob.hp) s.mob = freshMob(s);
+    }
+    s.lastEventAt = integer(raw.lastEventAt,0,0,now());
+    s.nextEventAt = integer(raw.nextEventAt,now()+randEventDelay(),0,now()+120000);
+    if (raw.event && ['goblin','chest'].includes(raw.event.type) && number(raw.event.expiresAt)>now()) {
+      const hp = number(raw.event.hp,1,1,MAX_NUMBER);
+      const maxHp = number(raw.event.maxHp,hp,hp,MAX_NUMBER);
+      s.event = {type:raw.event.type,hp,maxHp,expiresAt:integer(raw.event.expiresAt,now(),0,now()+18000)};
+    }
+    return s;
+  }
+  class Game {
+    constructor() {
+      this.state = null;
+      this.profileId = null;
+      this.tab = 'upgrades';
+      this.buyQuantity = 1;
+      this.inventoryFilter = 'all';
+      this.inventorySort = 'new';
+      this.lastFrameAt = 0;
+      this.lastCoreRender = 0;
+      this.lastPanelRender = 0;
+      this.lastZoneRendered = -1;
+      this.lastEventRendered = '';
+      this.startedLoop = false;
+      this.sessionStorage = new Map();
+      this.storageAvailable = this.testStorage();
+      this.bindEvents();
+      this.showAuth();
+      window.addEventListener('pagehide',()=>this.save());
+      window.addEventListener('beforeunload',()=>this.save());
+      document.addEventListener('visibilitychange',()=>{
+        if (this.state) {this.stepClock();this.save();this.renderCore();}
+      });
+      setInterval(()=>this.save(),SAVE_INTERVAL);
+    }
+    testStorage() {
+      try {localStorage.setItem('cinzas_probe','1');localStorage.removeItem('cinzas_probe');return true;}
+      catch (_) {return false;}
+    }
+    read(key) {
+      if (!this.storageAvailable) return this.sessionStorage.get(key) || null;
+      try {return localStorage.getItem(key);} catch (_) {this.storageAvailable=false;return this.sessionStorage.get(key)||null;}
+    }
+    write(key, value) {
+      if (!this.storageAvailable) {this.sessionStorage.set(key,value);return false;}
+      try {localStorage.setItem(key,value);return true;}
+      catch (_) {this.storageAvailable=false;this.sessionStorage.set(key,value);this.toast('Armazenamento indisponível. Exporte seu save para não perder progresso.');return false;}
+    }
+    getProfiles() {
+      try {
+        const data=JSON.parse(this.read(PROFILE_INDEX_KEY)||'[]');
+        if (!Array.isArray(data)) return [];
+        return data.slice(0,35).filter(p=>p && typeof p.id==='string' && /^[a-zA-Z0-9_-]{1,90}$/.test(p.id))
+          .map(p=>({id:p.id,name:safeName(p.name,18)||'Errante',lastPlayed:integer(p.lastPlayed,0,0,now())}));
+      } catch (_) {return [];}
+    }
+    storeProfiles(profiles) {this.write(PROFILE_INDEX_KEY,JSON.stringify(profiles.slice(0,35)));}
+    touchProfile() {
+      if (!this.state || !this.profileId) return;
+      const profiles=this.getProfiles();
+      const profile=profiles.find(p=>p.id===this.profileId);
+      if (profile) {profile.name=this.state.name;profile.lastPlayed=now();this.storeProfiles(profiles);}
+    }
+    showAuth() {
+      const profiles=this.getProfiles().sort((a,b)=>b.lastPlayed-a.lastPlayed);
+      const list=$('profileList');
+      list.replaceChildren();
+      for (const profile of profiles) {
+        const btn=document.createElement('button');btn.type='button';btn.className='saved-profile';
+        const name=document.createElement('strong');name.textContent='♜  '+profile.name;
+        const detail=document.createElement('small');detail.textContent='CONTINUAR  ❯';
+        btn.append(name,detail);btn.addEventListener('click',()=>this.openProfile(profile));list.append(btn);
+      }
+      $('savedProfiles').hidden=profiles.length===0;
+      $('authScreen').hidden=false;
+      $('newProfileName').value='';
+    }
+    createProfile(name, preloaded = null) {
+      const clean=safeName(name,18);
+      if (clean.length < 2) {this.toast('Escolha um nome com pelo menos 2 caracteres.');return;}
+      const profiles=this.getProfiles();
+      if (profiles.length>=35) {this.toast('Limite de 35 perfis locais atingido.');return;}
+      const profile={id:uid().replace(/[^a-zA-Z0-9_-]/g,''),name:clean,lastPlayed:now()};
+      const state=preloaded || newState(clean);
+      state.name=clean;
+      profiles.push(profile);this.storeProfiles(profiles);
+      this.write(SAVE_PREFIX+profile.id,JSON.stringify(state));
+      this.activate(profile,state);
+    }
+    openProfile(profile) {
+      try {
+        const data=this.read(SAVE_PREFIX+profile.id);
+        if (!data) {this.toast('Save não encontrado. Uma nova jornada foi iniciada.');this.activate(profile,newState(profile.name));return;}
+        const raw=JSON.parse(data);
+        this.activate(profile,normalizeSave(raw,profile.name));
+      } catch (error) {
+        this.dialog('Save danificado','Não foi possível ler este perfil. O arquivo local não foi substituído. Importe um backup JSON ou crie um novo aventureiro.',[{text:'ENTENDI'}],'⚠');
+      }
+    }
+    activate(profile,state) {
+      this.state=state;
+      this.profileId=profile.id;
+      this.lastZoneRendered=-1;
+      this.lastEventRendered='';
+      this.lastFrameAt=now();
+      $('authScreen').hidden=true;
+      const seconds=Math.min(MAX_OFFLINE_SECONDS,Math.max(0,(now()-state.lastSeen)/1000));
+      const offline=this.grantOffline(seconds);
+      state.lastSeen=now();
+      if (state.event && state.event.expiresAt <= now()) state.event=null;
+      state.nextEventAt=now()+this.nextEventDelay();
+      this.touchProfile();
+      this.renderEverything();
+      this.addLog('Uma chama ressurge nas ruínas. A caçada continua.','✦','good');
+      if (!this.storageAvailable) this.toast('Modo temporário: seu navegador bloqueou o armazenamento. Exporte backups JSON.');
+      if (offline.kills>0) {
+        this.addLog(`Seu ritual venceu ${fmt(offline.kills)} inimigos durante sua ausência.`, '☽', 'good');
+        this.dialog('O mundo seguiu em frente',`Enquanto você esteve ausente por ${this.formatDuration(seconds)}, suas forças arcanas derrotaram ${fmt(offline.kills)} inimigos.\n\n+${fmt(offline.gold)} ouro  ·  +${fmt(offline.xp)} XP\n\nAté 12 horas de progresso offline.`,[{text:'RETOMAR A CAÇADA',primary:true}],'☽');
+      }
+      this.save();
+      if (!this.startedLoop) {this.startedLoop=true;requestAnimationFrame((t)=>this.loop(t));}
+    }
+    bindEvents() {
+      $('createProfileForm').addEventListener('submit',(e)=>{e.preventDefault();this.createProfile($('newProfileName').value);});
+      $('switchProfile').addEventListener('click',()=>{if(this.state){this.save();this.state=null;this.profileId=null;this.showAuth();}});
+      $('attackTarget').addEventListener('click',()=>this.attack());
+      $('eventTarget').addEventListener('click',(e)=>{e.stopPropagation();this.attackEvent();});
+      document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>this.changeTab(btn.dataset.tab)));
+      $('tabBody').addEventListener('click',(e)=>this.onPanelClick(e));
+      $('tabBody').addEventListener('change',(e)=>{
+        if(e.target.id==='inventoryFilter'){this.inventoryFilter=e.target.value;this.renderPanel();}
+        if(e.target.id==='inventorySort'){this.inventorySort=e.target.value;this.renderPanel();}
+      });
+      $('exportSave').addEventListener('click',()=>this.exportSave());
+      $('importSave').addEventListener('click',()=>this.pickImport());
+      $('importFromAuth').addEventListener('click',()=>this.pickImport());
+      $('saveFileInput').addEventListener('change',(e)=>{const file=e.target.files?.[0];if(file)this.importSave(file);e.target.value='';});
+      document.addEventListener('keydown',(e)=>{
+        if (!this.state || !$('dialogBackdrop').hidden || !$('authScreen').hidden) return;
+        const interactive=['INPUT','BUTTON','SELECT','TEXTAREA'].includes(document.activeElement?.tagName);
+        if(e.code==='Space' && !interactive){e.preventDefault();this.attack();}
+      });
+    }
+    pickImport() {$('saveFileInput').click();}
+    save() {
+      if (!this.state || !this.profileId) return;
+      this.stepClock();
+      this.state.lastSeen=now();
+      const success=this.write(SAVE_PREFIX+this.profileId,JSON.stringify(this.state));
+      $('saveIndicator').classList.toggle('warning',!success);
+      $('saveIndicator').title=success?'Progresso salvo localmente':'Exportar JSON recomendado';
+    }
+    exportSave() {
+      if (!this.state) {this.toast('Abra um perfil para exportar o progresso.');return;}
+      this.save();
+      const output={type:'cinzas-do-crepusculo',format:1,exportedAt:new Date().toISOString(),state:this.state};
+      const blob=new Blob([JSON.stringify(output,null,2)],{type:'application/json;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const anchor=document.createElement('a');
+      anchor.href=url;anchor.download=`cinzas-save-${this.state.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_-]+/g,'-')||'aventureiro'}.json`;
+      document.body.append(anchor);anchor.click();anchor.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1200);
+      this.toast('Backup JSON exportado com sucesso.','good');
+    }
+    async importSave(file) {
+      if (file.size>2*1024*1024) {this.toast('Arquivo muito grande. O limite é 2 MB.');return;}
+      try {
+        const imported=JSON.parse(await file.text());
+        if (imported?.type!=='cinzas-do-crepusculo' || imported?.format!==1 || !imported?.state || typeof imported.state!=='object') throw Error('Arquivo não é um backup válido do jogo.');
+        const state=normalizeSave(imported.state,'Errante');
+        const perform=()=>{
+          if(this.state){state.name=this.state.name;this.activate({id:this.profileId,name:state.name},state);this.toast('Backup importado e validado.','good');}
+          else {this.createProfile(state.name,state);this.toast('Backup importado em um novo perfil.','good');}
+        };
+        if (this.state) this.dialog('Substituir o progresso?',`O backup pertence a “${state.name}”, nível ${state.level}. Importá-lo irá substituir o progresso do perfil atual. Exporte um backup antes, se necessário.`,[{text:'CANCELAR'},{text:'IMPORTAR',primary:true,action:perform}],'⚠');
+        else perform();
+      } catch(error){this.toast(`Falha na importação: ${safeName(error?.message,100)||'JSON inválido'}`);}
+    }
+    dialog(title,body,actions=[{text:'CONTINUAR',primary:true}],glyph='✦') {
+      $('dialogIcon').textContent=glyph;
+      $('dialogTitle').textContent=title;
+      $('dialogText').textContent=body;
+      const container=$('dialogActions');container.replaceChildren();
+      for (const act of actions) {
+        const btn=document.createElement('button');btn.type='button';btn.className=act.primary?'primary-button':'subtle-button';btn.textContent=act.text;
+        btn.addEventListener('click',()=>{$('dialogBackdrop').hidden=true;if(act.action)act.action();});container.append(btn);
+      }
+      $('dialogBackdrop').hidden=false;
+      container.querySelector('button:last-child')?.focus();
+    }
+    toast(text,kind='') {
+      const node=document.createElement('div');node.className=`toast ${kind}`;node.textContent=text;
+      const box=$('toastStack');box.prepend(node);
+      while(box.children.length>4)box.lastElementChild.remove();
+      setTimeout(()=>node.remove(),3800);
+    }
+    addLog(text,glyph='⚔',kind='') {
+      if(!this.state) return;
+      const row=document.createElement('div');row.className=`log-entry ${kind}`;
+      const symbol=document.createElement('div');symbol.className='log-glyph';symbol.textContent=glyph;
+      const content=document.createElement('div');const paragraph=document.createElement('p');paragraph.textContent=text;
+      const date=document.createElement('time');date.textContent=timeLabel();
+      content.append(paragraph,date);row.append(symbol,content);
+      const log=$('combatLog');log.prepend(row);
+      while(log.children.length>40)log.lastElementChild.remove();
+    }
+    formatDuration(seconds) {
+      const total=Math.floor(seconds);
+      if(total>=3600) return `${Math.floor(total/3600)}h ${Math.floor(total%3600/60)}min`;
+      if(total>=60) return `${Math.floor(total/60)}min`;
+      return `${total}s`;
+    }
+    equippedStats() {
+      const stats=slotStats();const s=this.state;
+      for(const slot of SLOTS){
+        const id=s.equipment[slot];
+        if (!id) continue;
+        const item=s.inventory.find(x=>x.id===id && x.slot===slot);
+        if(item)for(const key of Object.keys(stats))stats[key]+=item.stats[key];
+      }
+      return stats;
+    }
+    bonuses() {
+      const s=this.state,eq=this.equippedStats();
+      const click=multiply(2+s.level*.5+s.upgrades.strike*2.4+eq.click,1+s.skills.w1*.2);
+      const dps=multiply(s.upgrades.ritual*1.8+eq.dps,1+s.skills.s1*.25+s.skills.s4*.3);
+      const crit=Math.min(.75,.08+s.upgrades.focus*.007+s.skills.w2*.02+eq.crit);
+      const critDamage=1.7+s.skills.w3*.22;
+      const luck=s.skills.r1*.06+eq.luck;
+      const gold=1+s.upgrades.banner*.07+s.skills.s3*.10+eq.gold;
+      const drop=Math.min(.7,.18+luck*.12);
+      return {click,dps,crit,critDamage,luck,gold,drop,offline:.6*(1+s.skills.s2*.12),eventDamage:1+s.skills.w4*.35};
+    }
+    awardGold(amount) {
+      const value=number(amount);
+      const s=this.state;
+      const previous=s.gold;
+      s.gold=add(previous,value);
+      const earned=s.gold-previous;
+      s.runGold=add(s.runGold,earned);
+      return earned;
+    }
+    awardXp(amount) {
+      const s=this.state;
+      const before=s.level;
+      s.xp=add(s.xp,number(amount));
+      let iterations=0;
+      while(s.level<MAX_LEVEL && s.xp>=xpNeeded(s.level) && iterations++<MAX_LEVEL){
+        s.xp-=xpNeeded(s.level);
+        s.level++;
+      }
+      if(s.level>=MAX_LEVEL)s.xp=0;
+      if(s.level>before){
+        this.addLog(`Você alcançou o nível ${s.level}!`,'✦','good');
+        this.toast(`NÍVEL ${s.level} — seu poder aumentou!`,'good');
+        this.renderPanel();
+      }
+    }
+    grantOffline(seconds) {
+      const s=this.state;
+      if(!s || seconds<1)return {kills:0,gold:0,xp:0};
+      const bonus=this.bonuses();
+      if(bonus.dps<=0)return {kills:0,gold:0,xp:0};
+      const hp=Math.max(1,maxMobHp(s));
+      const damage=multiply(bonus.dps,Math.min(MAX_OFFLINE_SECONDS,seconds));
+      const kills=Math.min(MAX_OFFLINE_KILLS,Math.floor(damage/hp));
+      if(kills<=0)return {kills:0,gold:0,xp:0};
+      const gold=Math.floor(multiply(multiply(rewardGold(s),kills),bonus.gold*bonus.offline));
+      const xp=Math.floor(multiply(multiply(rewardXp(s),kills),bonus.offline));
+      this.awardGold(gold);
+      s.runKills+=kills;s.lifetimeKills+=kills;s.zoneKills[s.zone]+=kills;
+      this.awardXp(xp);
+      s.mob=freshMob(s);
+      return {kills,gold,xp};
+    }
+    stepClock() {
+      if(!this.state)return;
+      const t=now();
+      if(!this.lastFrameAt){this.lastFrameAt=t;return;}
+      const raw=(t-this.lastFrameAt)/1000;
+      this.lastFrameAt=t;
+      if(raw<=0)return;
+      if(this.state.event && this.state.event.expiresAt<=t)this.expireEvent();
+      if(raw>2){
+        const result=this.grantOffline(Math.min(MAX_OFFLINE_SECONDS,raw));
+        if(result.kills && document.visibilityState!=='hidden')this.addLog(`${fmt(result.kills)} abates em segundo plano: +${fmt(result.gold)} ouro.`,'☽','good');
+      }else{
+        const dps=this.bonuses().dps;
+        if(dps>0)this.damageMob(multiply(dps,Math.min(raw,2)),false,false);
+      }
+      if(document.visibilityState==='visible' && !this.state.event && t>=this.state.nextEventAt)this.spawnEvent();
+    }
+    loop() {
+      if(this.state){
+        this.stepClock();
+        const t=now();
+        if(t-this.lastCoreRender>90){this.renderCore();this.lastCoreRender=t;}
+        if(t-this.lastPanelRender>1750){
+          if(this.tab==='upgrades' || this.tab==='ascension')this.renderPanel();
+          this.lastPanelRender=t;
+        }
+      }
+      requestAnimationFrame(()=>this.loop());
+    }
+    attack() {
+      if(!this.state || !$('dialogBackdrop').hidden)return;
+      const b=this.bonuses(),critical=Math.random()<b.crit;
+      const hit=multiply(b.click,critical?b.critDamage:1);
+      this.damageMob(hit,true,critical);
+      const target=$('attackTarget');
+      target.classList.remove('damaged');void target.offsetWidth;target.classList.add('damaged');
+      setTimeout(()=>target.classList.remove('damaged'),170);
+    }
+    floatNumber(text,style='') {
+      const layer=$('damageLayer');
+      const node=document.createElement('span');node.className=`float-damage ${style}`;
+      node.textContent=text;
+      node.style.marginLeft=`${rand(-55,55)}px`;
+      layer.append(node);
+      while(layer.children.length>24)layer.firstElementChild.remove();
+      setTimeout(()=>node.remove(),900);
+    }
+    damageMob(amount,fromClick,critical) {
+      const s=this.state;
+      if(!s || amount<=0)return;
+      if(fromClick)this.floatNumber(`${critical?'CRÍTICO! ':''}−${fmt(amount)}`,critical?'crit':'');
+      let remaining=amount;
+      let chain=0;
+      while(remaining>0 && chain++<12){
+        const mob=s.mob;
+        if(!mob || mob.hp<=0){s.mob=freshMob(s);continue;}
+        if(remaining<mob.hp){mob.hp=Math.max(0,mob.hp-remaining);break;}
+        remaining-=mob.hp;
+        mob.hp=0;
+        this.killMob();
+      }
+    }
+    killMob() {
+      const s=this.state;
+      const name=s.mob?.name || 'Condenado';
+      const gold=Math.floor(multiply(rewardGold(s),this.bonuses().gold));
+      const xp=rewardXp(s);
+      this.awardGold(gold);
+      s.runKills++;s.lifetimeKills++;s.zoneKills[s.zone]++;
+      this.awardXp(xp);
+      const loot=this.bonuses().drop;
+      if(Math.random()<loot)this.dropItem();
+      if(s.runKills<5 || s.runKills%6===0)this.addLog(`${name} derrotado. +${fmt(gold)} ouro · +${fmt(xp)} XP.`,'⚔');
+      if(s.runKills===20 || s.runKills===65 || s.runKills===150 || s.runKills===300 || s.runKills===600) {
+        this.toast('Novo marco da jornada alcançado!','good');this.renderPanel();
+      }
+      if(!s.event && now()-s.lastEventAt>17000 && Math.random()<(.029+s.skills.r3*.007))this.spawnEvent();
+      s.mob=freshMob(s);
+      if(this.tab==='inventory' || this.tab==='zones')this.renderPanel();
+    }
+    nextEventDelay() {return Math.floor(randEventDelay()/(1+this.state.skills.r3*.14));}
+    spawnEvent() {
+      const s=this.state;
+      if(!s || s.event || document.visibilityState==='hidden')return;
+      const type=Math.random()<.55?'goblin':'chest';
+      const maxHp=Math.max(18,Math.ceil(this.bonuses().click*8));
+      s.event={type,hp:maxHp,maxHp,expiresAt:now()+11000+s.skills.r3*3000};
+      s.lastEventAt=now();s.nextEventAt=now()+this.nextEventDelay();
+      this.lastEventRendered='';
+      this.addLog(type==='goblin'?'Um Goblin do Tesouro apareceu!':'Um Baú Raro emergiu das sombras!','✦','rare');
+      this.toast('✦ EVENTO RARO! Clique no tesouro antes que fuja!');
+      this.renderEvent();
+    }
+    attackEvent() {
+      const s=this.state;
+      if(!s?.event || !$('dialogBackdrop').hidden)return;
+      if(now()>=s.event.expiresAt){this.expireEvent();return;}
+      const b=this.bonuses();
+      const critical=Math.random()<b.crit;
+      const dmg=multiply(b.click*(critical?b.critDamage:1),b.eventDamage);
+      s.event.hp=Math.max(0,s.event.hp-dmg);
+      this.floatNumber(`−${fmt(dmg)}`,'event-hit');
+      if(s.event.hp<=0)this.winEvent();
+      this.renderEvent();
+    }
+    expireEvent() {
+      if(!this.state?.event)return;
+      this.addLog(this.state.event.type==='goblin'?'O goblin escapou com suas riquezas.':'O baú desapareceu nas sombras.','☾');
+      this.state.event=null;this.renderEvent();
+    }
+    winEvent() {
+      const s=this.state,event=s.event;
+      if(!event)return;
+      s.event=null;
+      const gold=Math.floor(multiply(rewardGold(s),event.type==='goblin'?38:27)*this.bonuses().gold);
+      const xp=Math.floor(multiply(rewardXp(s),9));
+      const shards=rand(event.type==='goblin'?3:2,7);
+      this.awardGold(gold);this.awardXp(xp);
+      s.shards+=shards;
+      const souls=Math.floor(s.shards/10);
+      if(souls){s.souls=add(s.souls,souls);s.shards%=10;}
+      const rarity=Math.random()<(.16+s.skills.r2*.035)?'lendario':'epico';
+      const item=this.dropItem(rarity);
+      const name=event.type==='goblin'?'Goblin do Tesouro':'Baú Raro';
+      this.floatNumber(`+${fmt(gold)} OURO`,'reward');
+      this.addLog(`${name}: +${fmt(gold)} ouro, +${fmt(xp)} XP, ${shards} fragmentos${souls?`, +${souls} alma(s)`:''}!`,'✦','epic');
+      this.toast(`TESOURO! +${fmt(gold)} ouro · ${rarity==='lendario'?'LENDÁRIO':'ÉPICO'} · ${shards} fragmentos`,'epic');
+      if(item)this.addLog(`Tesouro raro: ${item.name}!`,'◆','epic');
+      this.renderEverything();this.save();
+    }
+    rollRarity() {
+      const s=this.state,b=this.bonuses();
+      const bias=s.skills.r2+b.luck*2+s.zone*.25;
+      const weights=[Math.max(15,58-bias*4),Math.max(10,27-bias),11+bias*.8,3.3+bias*1.5,.7+bias*.8];
+      const sum=weights.reduce((a,v)=>a+v,0);
+      let pickValue=Math.random()*sum;
+      for(let i=0;i<weights.length;i++){pickValue-=weights[i];if(pickValue<=0)return RARITIES[i].id;}
+      return 'comum';
+    }
+    makeItem(forcedRarity=null) {
+      const s=this.state;
+      const rarity=RARITIES.find(r=>r.id===forcedRarity)||RARITIES.find(r=>r.id===this.rollRarity())||RARITIES[0];
+      const slot=pick(SLOTS);
+      const base=(1+s.level*.16+s.zone*.65)*rarity.multiplier;
+      const stats=slotStats();
+      const roll=()=>.84+Math.random()*.35;
+      if(slot==='weapon'){stats.click=Math.round(base*3.5*roll());if(rarity.multiplier>=1.95)stats.crit=Number((.007*rarity.multiplier*roll()).toFixed(4));}
+      if(slot==='armor'){stats.dps=Math.round(base*2.3*roll()*10)/10;if(rarity.multiplier>=3)stats.click=Math.round(base*roll());}
+      if(slot==='ring'){stats.gold=Number((base*.019*roll()).toFixed(3));stats.crit=Number((rarity.multiplier*.008*roll()).toFixed(4));}
+      if(slot==='relic'){stats.luck=Number((base*.013*roll()).toFixed(3));stats.dps=Math.round(base*1.2*roll()*10)/10;}
+      const prefix=pick(PREFIXES[rarity.id]);
+      const title=pick(EQUIPMENT_WORDS[slot]);
+      const name=prefix.startsWith('do ')||prefix.startsWith('da ')?`${title} ${prefix}`:`${title} ${prefix}`;
+      return {id:uid(),slot,rarity:rarity.id,name,level:s.level,stats,createdAt:now()};
+    }
+    dropItem(forceRarity=null) {
+      const item=this.makeItem(forceRarity);
+      const s=this.state;
+      if(s.inventory.length>=MAX_INVENTORY){
+        if(forceRarity){
+          // Event treasures are guaranteed: replace the weakest un-equipped item.
+          const protectedIds=new Set(Object.values(s.equipment).filter(Boolean));
+          const weakest=s.inventory.filter(i=>!protectedIds.has(i.id)).sort((a,b)=>
+            RARITIES.findIndex(r=>r.id===a.rarity)-RARITIES.findIndex(r=>r.id===b.rarity) || this.itemPower(a)-this.itemPower(b))[0];
+          if(weakest){
+            s.inventory=s.inventory.filter(i=>i.id!==weakest.id);
+            this.awardGold(this.itemPrice(weakest));
+            this.addLog(`Inventário cheio: ${weakest.name} foi vendido para receber o tesouro raro.`,'♢');
+          }
+        }else{
+          const sell=this.itemPrice(item);
+          this.awardGold(sell);
+          this.addLog(`Inventário cheio: ${item.name} convertido em ${fmt(sell)} ouro.`,'♢');
+          return null;
+        }
+      }
+      s.inventory.push(item);
+      if(['epico','lendario'].includes(item.rarity)){
+        this.addLog(`${item.rarity==='lendario'?'LENDÁRIO':'ÉPICO'} encontrado: ${item.name}!`,'◆',item.rarity==='lendario'?'rare':'epic');
+        this.toast(`✦ ${item.name} encontrado!`,item.rarity==='lendario'?'rare':'epic');
+      }else if(s.inventory.length<6){this.addLog(`Equipamento encontrado: ${item.name}.`,'♢');}
+      $('inventoryCount').textContent=s.inventory.length;
+      if(this.tab==='inventory')this.renderPanel();
+      return item;
+    }
+    itemPrice(item) {
+      return Math.max(4,Math.floor((6+item.level*4)*RARITIES.find(r=>r.id===item.rarity).multiplier*power(1.42,this.state.zone)));
+    }
+    equipItem(id) {
+      const item=this.state.inventory.find(x=>x.id===id);
+      if(!item)return;
+      if(this.state.equipment[item.slot]===id)this.state.equipment[item.slot]=null;
+      else this.state.equipment[item.slot]=id;
+      this.renderPanel();this.renderCore();
+    }
+    sellItem(id) {
+      const s=this.state,index=s.inventory.findIndex(x=>x.id===id);
+      if(index<0)return;
+      const item=s.inventory[index];
+      if(s.equipment[item.slot]===id){this.toast('Desequipe este item antes de vendê-lo.');return;}
+      s.inventory.splice(index,1);
+      const price=this.itemPrice(item);this.awardGold(price);
+      this.toast(`Item vendido por ${fmt(price)} ouro.`);this.renderPanel();
+    }
+    sellLowRarities() {
+      const s=this.state;
+      const equipped=new Set(Object.values(s.equipment).filter(Boolean));
+      const toSell=s.inventory.filter(i=>['comum','incomum'].includes(i.rarity)&&!equipped.has(i.id));
+      if(!toSell.length){this.toast('Nenhum equipamento comum/incomum disponível para venda.');return;}
+      let total=0;for(const item of toSell)total=add(total,this.itemPrice(item));
+      const ids=new Set(toSell.map(x=>x.id));s.inventory=s.inventory.filter(i=>!ids.has(i.id));
+      this.awardGold(total);this.toast(`${toSell.length} itens vendidos por ${fmt(total)} ouro.`,'good');this.renderPanel();
+    }
+    upgradeCost(up) {
+      return Math.max(1,Math.floor(multiply(up.base,power(up.growth,this.state.upgrades[up.id]))));
+    }
+    upgradeQuote(up,desired) {
+      const s=this.state;
+      const capacity=Math.max(0,MAX_RANK-s.upgrades[up.id]);
+      const wanted=desired==='max'?capacity:Math.min(desired,capacity);
+      let affordable=0,total=0;
+      for(let i=0;i<wanted;i++){
+        const price=Math.max(1,Math.floor(multiply(up.base,power(up.growth,s.upgrades[up.id]+i))));
+        if(price>MAX_NUMBER-total || total+price>s.gold)break;
+        total+=price;affordable++;
+      }
+      return {count:affordable,total};
+    }
+    buyUpgrade(id) {
+      const up=UPGRADES.find(x=>x.id===id);
+      if(!up)return;
+      const quote=this.upgradeQuote(up,this.buyQuantity);
+      if(!quote.count){this.toast('Ouro insuficiente para essa melhoria.');return;}
+      this.state.gold=Math.max(0,this.state.gold-quote.total);
+      this.state.upgrades[id]+=quote.count;
+      this.renderCore();this.renderPanel();
+    }
+    skillCost(skill) {
+      return Math.max(1,Math.floor(multiply(skill.cost,power(skill.growth,this.state.skills[skill.id]))));
+    }
+    buySkill(id) {
+      const skill=SKILLS.find(x=>x.id===id);
+      if(!skill)return;
+      const s=this.state;
+      if(s.skills[id]>=skill.max || (skill.req && s.skills[skill.req]<skill.reqRank))return;
+      const price=this.skillCost(skill);
+      if(s.souls<price){this.toast('Almas insuficientes. Renascimentos concedem novas almas.');return;}
+      s.souls-=price;s.skills[id]++;
+      this.addLog(`A habilidade ${skill.name} alcançou grau ${s.skills[id]}.`,'✧','epic');
+      this.renderEverything();
+    }
+    previewPrestige() {
+      const s=this.state;
+      if(s.level<15 || s.runKills<100)return 0;
+      const base=Math.floor(Math.sqrt(s.runGold/2900)+s.level/12+s.zone*2);
+      return Math.max(1,Math.floor(base*(1+s.skills.r4*.12)));
+    }
+    requestAscension() {
+      const gain=this.previewPrestige();
+      if(!gain){this.toast('Requer nível 15 e pelo menos 100 abates nesta jornada.');return;}
+      this.dialog('Renascer das Cinzas?',`Você receberá ${fmt(gain)} alma(s) permanente(s). Nível, XP, ouro, upgrades e regiões serão reiniciados.\n\nEquipamentos, inventário, fragmentos, almas e toda a árvore de habilidades serão preservados.`,[
+        {text:'AINDA NÃO'},
+        {text:'RENASCER',primary:true,action:()=>this.performAscension(gain)}
+      ],'◆');
+    }
+    performAscension(gain) {
+      const s=this.state;
+      s.souls=add(s.souls,gain);
+      s.level=1;s.xp=0;s.gold=0;s.zone=0;s.zoneKills=Array(ZONES.length).fill(0);
+      s.upgrades=emptyRanks(UPGRADES);s.runKills=0;s.runGold=0;
+      s.rebirths++;s.event=null;s.mob=freshMob(s);s.nextEventAt=now()+this.nextEventDelay();
+      this.lastZoneRendered=-1;this.lastEventRendered='';
+      this.changeTab('ascension');this.renderEverything();
+      this.addLog(`RENASCIMENTO ${s.rebirths}: ${fmt(gain)} almas recebidas.`,'◆','epic');
+      this.toast(`Você renasceu e conquistou ${fmt(gain)} almas eternas!`,'epic');
+      this.save();
+    }
+    travelTo(z) {
+      const index=validZone(z);
+      if(!unlockedZone(this.state,index)){this.toast(`Região bloqueada: requer nível ${ZONES[index].level} e ${ZONES[index].kills} abates.`);return;}
+      if(index===this.state.zone)return;
+      this.state.zone=index;
+      this.state.mob=freshMob(this.state);
+      this.state.event=null;
+      this.state.nextEventAt=now()+this.nextEventDelay();
+      this.lastZoneRendered=-1;
+      this.addLog(`Você atravessou para ${ZONES[index].name}.`,'⚑','rare');
+      this.changeTab('zones');this.renderEverything();this.save();
+    }
+    changeTab(name) {
+      if(!TABS.has(name) || !this.state)return;
+      this.tab=name;
+      for(const btn of document.querySelectorAll('[data-tab]')){
+        const active=btn.dataset.tab===name;
+        btn.classList.toggle('active',active);
+        btn.setAttribute('aria-selected',String(active));
+      }
+      this.renderPanel();
+    }
+    renderEverything() {this.renderCore();this.renderPanel();this.renderEvent();}
+    renderScene() {
+      const s=this.state;
+      if(s.zone===this.lastZoneRendered)return;
+      const z=ZONES[s.zone];
+      $('battlefield').className=`battlefield zone-${s.zone}`;
+      $('zoneName').textContent=z.name;
+      $('zoneSubtitle').textContent=z.subtitle;
+      $('zoneCrest').textContent=z.rune;
+      $('monsterArt').innerHTML=ART[z.art]; // Fixed, trusted in-source SVG dictionary only.
+      this.lastZoneRendered=s.zone;
+    }
+    renderCore() {
+      const s=this.state;
+      if(!s)return;
+      const b=this.bonuses();
+      this.renderScene();
+      $('goldValue').textContent=fmt(s.gold);
+      $('prestigeValue').textContent=fmt(s.souls);
+      $('fragmentValue').textContent=`${s.shards} / 10`;
+      $('profileName').textContent=s.name;
+      $('levelValue').textContent=fmt(s.level);
+      const required=xpNeeded(s.level);
+      $('xpLabel').textContent=s.level===MAX_LEVEL?'NÍVEL MÁXIMO':`${fmt(s.xp)} / ${fmt(required)} XP`;
+      const pct=s.level>=MAX_LEVEL?100:Math.max(0,Math.min(100,s.xp/required*100));
+      $('xpFill').style.width=`${pct}%`;
+      $('xpProgress').setAttribute('aria-valuenow',String(Math.round(pct)));
+      $('clickStat').textContent=fmt(b.click,1);
+      $('dpsStat').textContent=fmt(b.dps,1);
+      $('critStat').textContent=fmtPercent(b.crit);
+      $('luckStat').textContent=fmtPercent(b.luck);
+      $('runKills').textContent=fmt(s.runKills);
+      $('runGold').textContent=fmt(s.runGold);
+      $('rebirths').textContent=fmt(s.rebirths);
+      $('runStatus').textContent=`JORNADA ${this.roman(Math.min(30,s.rebirths+1))}`;
+      $('currentZoneShort').textContent=ZONES[s.zone].rune;
+      $('mobName').textContent=s.mob.name;
+      $('mobLevel').textContent=`Nv. ${fmt(s.mob.level)}`;
+      $('intelMob').textContent=s.mob.name;
+      $('mobHPText').textContent=`${fmt(Math.ceil(s.mob.hp))} / ${fmt(s.mob.maxHp)}`;
+      $('mobHPFill').style.width=`${Math.max(0,Math.min(100,100*s.mob.hp/Math.max(1,s.mob.maxHp)))}%`;
+      $('zoneKillsLabel').textContent=`${fmt(s.zoneKills[s.zone])} ABATES NESTA ZONA`;
+      $('intelReward').textContent=`+${fmt(Math.floor(rewardGold(s)*b.gold))} ouro · +${fmt(rewardXp(s))} XP`;
+      $('dropChance').textContent=fmtPercent(b.drop);
+      $('goldBonus').textContent=`+${fmtPercent(b.gold-1)}`;
+      $('prestigePreview').textContent=fmt(this.previewPrestige());
+      $('inventoryCount').textContent=s.inventory.length;
+      this.renderMilestone();
+      this.renderEvent();
+    }
+    roman(n) {
+      const pairs=[[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+      let result='';for(const [a,b] of pairs)while(n>=a){result+=b;n-=a;}
+      return result;
+    }
+    renderMilestone() {
+      const s=this.state;
+      const next=ZONES.findIndex((z,i)=>i>s.zone && !unlockedZone(s,i));
+      const nextZone=next===-1?null:ZONES[next];
+      if(!nextZone){
+        $('milestoneTitle').textContent='A escuridão conhece seu nome';
+        $('milestoneDescription').textContent='Todas as regiões estão acessíveis. A ascensão trará um poder ainda maior.';
+        return;
+      }
+      const remainingKills=Math.max(0,nextZone.kills-s.runKills),remainingLevels=Math.max(0,nextZone.level-s.level);
+      $('milestoneTitle').textContent=`Próximo destino: ${nextZone.name}`;
+      $('milestoneDescription').textContent=`Requer nível ${nextZone.level} e ${fmt(nextZone.kills)} abates · faltam ${remainingLevels} níveis e ${fmt(remainingKills)} abates.`;
+    }
+    renderEvent() {
+      const e=this.state?.event,overlay=$('eventOverlay');
+      if(!e){overlay.hidden=true;this.lastEventRendered='';return;}
+      if(e.expiresAt<=now()){this.expireEvent();return;}
+      overlay.hidden=false;
+      const key=`${e.type}-${e.expiresAt}`;
+      if(this.lastEventRendered!==key){
+        $('eventTitle').textContent=e.type==='goblin'?'Goblin do Tesouro':'Baú Raro';
+        $('eventArt').innerHTML=EVENT_ART[e.type]; // trusted built-in illustrations
+        $('eventTarget').setAttribute('aria-label',`Atacar ${e.type==='goblin'?'goblin':'baú'} do evento`);
+        this.lastEventRendered=key;
+      }
+      $('eventHPFill').style.width=`${Math.max(0,Math.min(100,e.hp/e.maxHp*100))}%`;
+      $('eventTime').textContent=`${Math.max(0,(e.expiresAt-now())/1000).toFixed(1)}s`;
+    }
+    renderPanel() {
+      if(!this.state)return;
+      let html='';
+      switch(this.tab){
+        case 'upgrades':html=this.renderUpgrades();break;
+        case 'inventory':html=this.renderInventory();break;
+        case 'zones':html=this.renderZones();break;
+        case 'ascension':html=this.renderAscension();break;
+      }
+      const body=$('tabBody');
+      const top=body.scrollTop;
+      body.innerHTML=html;
+      body.scrollTop=top;
+      this.lastPanelRender=now();
+    }
+    renderUpgrades() {
+      return `<div class="section-headline"><div><h2>Forja &amp; Rituais</h2><p>Invista o ouro conquistado para fortalecer esta jornada. Melhorias básicas reiniciam na ascensão.</p></div><div class="quantity-control"><small>COMPRAR</small>${[1,10,'max'].map(n=>`<button class="mini-button ${this.buyQuantity===n?'selected':''}" data-qty="${n}" type="button">${n==='max'?'MÁX':`x${n}`}</button>`).join('')}</div></div>
+      <div class="upgrade-grid">${UPGRADES.map(up=>{
+        const rank=this.state.upgrades[up.id],quote=this.upgradeQuote(up,this.buyQuantity);
+        const maxed=rank>=MAX_RANK;
+        const label=maxed?'MELHORIA MÁXIMA':quote.count?`COMPRAR ${quote.count} · ✦ ${fmt(quote.total)}`:`✦ ${fmt(this.upgradeCost(up))} OURO`;
+        return `<article class="upgrade-card"><div class="upgrade-icon">${up.icon}</div><h3 class="upgrade-name">${esc(up.title)}</h3><div class="upgrade-description">${esc(up.desc)}</div><div class="upgrade-rank"><span>NÍVEL <strong>${fmt(rank)}</strong></span><span>${esc(up.effect)}</span></div><button type="button" data-buy="${up.id}" class="buy-button" ${!quote.count?'disabled':''}>${label}</button></article>`;
+      }).join('')}</div>`;
+    }
+    itemStatLines(item) {
+      const a=item.stats,lines=[];
+      if(a.click)lines.push(`+${fmt(a.click,1)} golpe`);
+      if(a.dps)lines.push(`+${fmt(a.dps,1)} DPS`);
+      if(a.crit)lines.push(`+${fmtPercent(a.crit)} crítico`);
+      if(a.gold)lines.push(`+${fmtPercent(a.gold)} ouro`);
+      if(a.luck)lines.push(`+${fmtPercent(a.luck)} sorte`);
+      return lines.join(' · ') || 'Poder ancestral';
+    }
+    itemPower(item) {const a=item.stats;return a.click+a.dps*2+a.crit*150+a.gold*30+a.luck*35;}
+    renderInventory() {
+      const s=this.state;
+      const equipment=SLOTS.map(slot=>{
+        const item=s.inventory.find(x=>x.id===s.equipment[slot]);
+        return `<div class="equip-slot"><span class="equip-symbol">${SLOT_SYMBOLS[slot]}</span><div><small>${SLOT_NAMES[slot].toUpperCase()}</small><strong title="${esc(item?.name||'Vazio')}">${item?esc(item.name):'Vazio'}</strong></div></div>`;
+      }).join('');
+      const filters=['all',...SLOTS];
+      const filterOptions=filters.map(f=>`<option value="${f}" ${this.inventoryFilter===f?'selected':''}>${f==='all'?'Todos os tipos':SLOT_NAMES[f]}</option>`).join('');
+      const sortOptions=[['new','Mais recentes'],['rarity','Maior raridade'],['power','Maior poder']].map(([key,label])=>`<option value="${key}" ${this.inventorySort===key?'selected':''}>${label}</option>`).join('');
+      const items=s.inventory.filter(i=>this.inventoryFilter==='all'||i.slot===this.inventoryFilter).slice().sort((a,b)=>{
+        if(this.inventorySort==='rarity')return RARITIES.findIndex(x=>x.id===b.rarity)-RARITIES.findIndex(x=>x.id===a.rarity);
+        if(this.inventorySort==='power')return this.itemPower(b)-this.itemPower(a);
+        return b.createdAt-a.createdAt;
+      });
+      return `<div class="section-headline"><div><h2>Arsenal do Errante</h2><p>Equipamentos são preservados após a ascensão. Espaço ocupado: ${s.inventory.length}/${MAX_INVENTORY}.</p></div></div>
+        <div class="equipment-strip">${equipment}</div>
+        <div class="inventory-tools"><div class="filter-control"><label for="inventoryFilter">TIPO</label><select class="dark-select" id="inventoryFilter">${filterOptions}</select><label for="inventorySort">ORDEM</label><select class="dark-select" id="inventorySort">${sortOptions}</select></div><button type="button" class="subtle-button" data-sell-low>VENDER COMUNS + INCOMUNS</button></div>
+        ${items.length?`<div class="inventory-grid">${items.map(item=>{
+          const rarity=RARITIES.find(x=>x.id===item.rarity);
+          const equipped=s.equipment[item.slot]===item.id;
+          return `<article class="item-card rarity-${item.rarity} ${equipped?'equipped':''}"><div class="item-top"><div class="item-glyph">${SLOT_SYMBOLS[item.slot]}</div><div><div class="rarity">${rarity.label} · NV. ${item.level}</div><h3>${esc(item.name)}</h3></div></div><div class="item-stats">${esc(this.itemStatLines(item))}</div><div class="item-actions"><button type="button" data-equip="${esc(item.id)}">${equipped?'DESEQUIPAR':'EQUIPAR'}</button><button type="button" data-sell="${esc(item.id)}" ${equipped?'disabled':''}>VENDER · ${fmt(this.itemPrice(item))}</button></div></article>`;
+        }).join('')}</div>`:`<div class="empty-state"><div class="empty-glyph">◇</div><strong>Nenhum equipamento encontrado</strong>Derrote criaturas ou abra tesouros para conquistar recompensas.</div>`}`;
+    }
+    renderZones() {
+      const s=this.state;
+      return `<div class="section-headline"><div><h2>Mapa das Terras Perdidas</h2><p>O caminho se abre com experiência e vitórias. Cada região oferece mais ouro, XP e inimigos resistentes.</p></div></div><div class="zone-grid">${ZONES.map((z,index)=>{
+        const unlocked=unlockedZone(s,index),current=index===s.zone;
+        const gate=unlocked?`${fmt(s.zoneKills[index])} abates nesta região`:`Requer nv. ${z.level} · ${fmt(z.kills)} abates`;
+        return `<article class="zone-card ${current?'current':''} ${!unlocked?'locked':''}"><div class="zone-index">${unlocked?'✧':'♜'} &nbsp; REGIÃO ${z.rune}</div><h3>${esc(z.name)}</h3><p>${esc(z.subtitle)}</p><div class="zone-requirement">${gate}</div><button type="button" data-travel="${index}" ${!unlocked||current?'disabled':''}>${current?'ATUAL':unlocked?'VIAJAR':'BLOQUEADA'}</button></article>`;
+      }).join('')}</div>`;
+    }
+    renderAscension() {
+      const s=this.state,gain=this.previewPrestige(),ready=gain>0;
+      const paths=SKILL_PATHS.map(path=>{
+        const nodes=SKILLS.filter(x=>x.path===path.id).map((skill)=>{
+          const rank=s.skills[skill.id];
+          const maxed=rank>=skill.max;
+          const locked=Boolean(skill.req && s.skills[skill.req]<skill.reqRank);
+          const price=this.skillCost(skill);
+          const afford=s.souls>=price;
+          const disabled=locked||maxed||!afford;
+          const caption=maxed?'DOMINADA':locked?`REQUER ${SKILLS.find(x=>x.id===skill.req).name} ${skill.reqRank}`:`◆ ${fmt(price)} ALMA${price>1?'S':''}`;
+          return `<button type="button" class="skill-node ${rank?'unlocked':''} ${locked?'locked':''} ${!disabled?'available':''}" data-skill="${skill.id}" ${disabled?'disabled':''} title="${esc(skill.desc)}"><span class="node-symbol">${skill.icon}</span><span class="node-copy"><strong>${esc(skill.name)} · ${rank}/${skill.max}</strong><span>${esc(skill.desc)}</span><em>${esc(caption)}</em></span></button>`;
+        }).join('');
+        return `<div class="skill-path"><div class="skill-path-header"><span class="path-icon">${path.icon}</span><strong>${esc(path.name)}</strong><small>${esc(path.subtitle)}</small></div>${nodes}</div>`;
+      }).join('');
+      return `<div class="section-headline"><div><h2>O Pacto Eterno</h2><p>Almas persistem entre vidas. Desbloqueie nodos sucessivos e molde seu próprio legado.</p></div><span class="eyebrow">◆ ${fmt(s.souls)} ALMAS DISPONÍVEIS</span></div><div class="ascension-layout"><aside class="ascension-info"><div class="ascension-sigil">◆</div><h3>Renascimento</h3><p>Entregue o poder desta jornada ao crepúsculo. Sua próxima vida começará no nível 1, mas com equipamentos e habilidades permanentes.</p><div class="ascension-gain"><strong>+${fmt(gain)}</strong><span>ALMAS AO RENASCER</span></div><button type="button" class="buy-button ascend-button" data-ascend ${!ready?'disabled':''}>${ready?'INICIAR ASCENSÃO ✧':'ASCENSÃO BLOQUEADA'}</button><div class="ascension-note">${ready?'Pronto para transcender.':`Requer nível 15 (${s.level}/15) e 100 abates (${fmt(s.runKills)}/100).`} O inventário, almas, fragmentos e habilidades permanecem.</div></aside><div class="skill-tree">${paths}</div></div>`;
+    }
+    onPanelClick(e) {
+      if(!this.state)return;
+      const b=e.target.closest('button');if(!b||b.disabled)return;
+      if(b.dataset.qty){this.buyQuantity=b.dataset.qty==='max'?'max':integer(b.dataset.qty,1,1,10);this.renderPanel();return;}
+      if(b.dataset.buy){this.buyUpgrade(b.dataset.buy);return;}
+      if(b.dataset.equip){this.equipItem(b.dataset.equip);return;}
+      if(b.dataset.sell){this.sellItem(b.dataset.sell);return;}
+      if(b.hasAttribute('data-sell-low')){this.sellLowRarities();return;}
+      if(b.dataset.travel!==undefined){this.travelTo(integer(b.dataset.travel));return;}
+      if(b.dataset.skill){this.buySkill(b.dataset.skill);return;}
+      if(b.hasAttribute('data-ascend')){this.requestAscension();}
+    }
+  }
+  new Game();
+})();
