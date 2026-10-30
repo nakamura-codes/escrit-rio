@@ -2,7 +2,7 @@
 
 Seis artes novas geradas com a ferramenta integrada imagegen. Resolução nativa efetivamente entregue: **1672 × 941 pixels**, acima de HD 720p; não são Full HD/4K e não foram ampliadas artificialmente. Os arquivos WebP em `assets/backgrounds/hd/` preservam as dimensões e usam qualidade 94.
 
-A implementação usa uma pintura coerente por região em dois planos alinhados: horizonte completo e piso revelado por máscara suave apenas abaixo da arquitetura. A atmosfera é um gradiente CSS discreto. Não são cinco recortes independentes nem geometria 3D. O deslocamento é exclusivamente horizontal, no máximo 7,8 pixels no piso, com margem de segurança de 3%. Os personagens permanecem acima de todos os planos. Movimento reduzido desativa os deslocamentos.
+A implementação usa uma pintura coerente por região em dois planos alinhados: horizonte completo e piso revelado por máscara suave apenas abaixo da arquitetura. A atmosfera é um gradiente CSS discreto. Não são cinco recortes independentes nem geometria 3D. O deslocamento é exclusivamente horizontal, no máximo 15,6 pixels no piso, com margem de segurança de 5%. Os personagens permanecem acima de todos os planos. A oscilação automática tem período de 18 segundos e funciona também em telas de toque; o mouse acrescenta um deslocamento suave. Movimento reduzido desativa os deslocamentos. A animação pausa com a aba oculta ou a arena fora da tela.
 
 ## Direção e prompts de geração
 
