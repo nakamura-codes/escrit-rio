@@ -35,7 +35,12 @@
   const ITEM_ZONE_MAP = ['Campos de Cinza','Bosque Profanado','Criptas Afogadas','Fortaleza de Ferro','Fendas Infernais','Trono do Crepúsculo'];
   const CATALOG_SLOTS = {arma:'weapon',armadura:'armor',capacete:'helmet',anel:'ring',colar:'necklace','relíquia':'relic'};
   const CATALOG_RARITIES = {Sucata:'sucata',Comum:'comum',Incomum:'incomum',Raro:'raro','Épico':'epico',Lendário:'lendario'};
-  const CATALOG_RARITY_WEIGHTS = {sucata:0,comum:52,incomum:29,raro:13,epico:5,lendario:1};
+  const QUALITY_BASE = {comum:1,incomum:1.45,raro:2.1,epico:3,lendario:4.8};
+  const QUALITY_STEP = {comum:.09,incomum:.13,raro:.2,epico:.25,lendario:.3};
+  const QUALITY_WEIGHTS = [25,20,16,12,9,7,5,3,2,1];
+  function qualityMultiplier(rarity,quality){return (QUALITY_BASE[rarity]||1)+(QUALITY_STEP[rarity]||0)*(quality-1);}
+  function weightedPick(values,weights){let roll=Math.random()*weights.reduce((a,b)=>a+b,0);for(let i=0;i<values.length;i++){roll-=weights[i];if(roll<0)return values[i];}return values[values.length-1];}
+  function rollQuality(){return weightedPick([1,2,3,4,5,6,7,8,9,10],QUALITY_WEIGHTS);}
   const catalogZone = (def) => Math.max(0,ITEM_ZONE_MAP.indexOf(def.regiao));
   const catalogImage = (id) => CATALOG_BY_ID.has(id) ? `assets/items/${id}.png` : null;
   const ZONES = [
@@ -201,7 +206,7 @@
     const stats=slotStats();
     for (const key of Object.keys(stats)) stats[key]=number(item.stats?.[key],0,0,1e8);
     return {id:String(item.id??'').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,100)||uid(),kind,
-      catalogId:def?.id||'',slot:kind==='equipment'?item.slot:null,rarity:item.rarity,
+      catalogId:def?.id||'',slot:kind==='equipment'?item.slot:null,rarity:item.rarity,quality:kind==='equipment' && Number.isInteger(item.quality) && item.quality>=1 && item.quality<=10 ? item.quality : null,
       name:safeName(item.name,75)||def?.nome||'Item desconhecido',
       level:integer(item.level,1,1,MAX_LEVEL),qty:integer(item.qty,1,1,99999),stats,
       createdAt:integer(item.createdAt,now(),0,now()+100000)};
@@ -528,7 +533,7 @@
       const critDamage=1.7+s.skills.w3*.22;
       const luck=s.skills.r1*.06+eq.luck;
       const gold=1+s.upgrades.banner*.07+s.skills.s3*.10+eq.gold;
-      const drop=Math.min(.7,.18+luck*.12);
+      const drop=Math.min(.35,.08+luck*.06);
       const maxHp=heroMaxHp(s);
       const defense=Math.max(0,3+(s.level-1)*.28+s.upgrades.guard*2.5+eq.defense);
       const regen=Math.max(.2,.55+maxHp*.0025+s.upgrades.recovery*.65);
@@ -728,12 +733,12 @@
       if(kind==='miniboss'){
         progress.minibossDefeated=true;
         progress.stage=6;progress.kills=0;
-        this.dropItem('raro');
+        this.dropItem(weightedPick(['incomum','raro','epico'],[70,27,3]));
         this.addLog(`MINIBOSS ${name} vencido! Fase 6 desbloqueada. +${fmt(gold)} ouro e +${fmt(xp)} XP.`,'⚔','epic');
         this.toast('✦ MINIBOSS VENCIDO! A fase 6 foi liberada!','epic');
       }else if(kind==='boss'){
         progress.bossDefeated=true;progress.cleared=true;progress.stage=10;progress.kills=10;
-        this.dropItem('lendario');
+        this.dropItem(weightedPick(['raro','epico','lendario'],[77,20,3]));
         this.addLog(`CHEFÃO ${name} DERROTADO! ${ZONES[s.zone].name} foi conquistada! +${fmt(gold)} ouro e +${fmt(xp)} XP.`,'◆','epic');
         this.toast(`CHEFÃO DERROTADO! ${s.zone===ZONES.length-1?'Todas as regiões conquistadas!':'Nova região liberada!'}`,'epic');
         travelNext=s.zone<ZONES.length-1;
@@ -755,7 +760,7 @@
         }
         if(Math.random()<this.bonuses().drop)this.dropItem();
         // Sucatas surgem independentemente dos equipamentos e são empilháveis.
-        if(Math.random()<.23)this.dropMaterial();
+        if(Math.random()<.12)this.dropMaterial();
         this.addLog(`${name} derrotado. +${fmt(gold)} ouro · +${fmt(xp)} XP.`,'⚔');
       }
       if(!s.event && now()-s.lastEventAt>17000 && Math.random()<(.029+s.skills.r3*.007))this.spawnEvent();
@@ -814,23 +819,19 @@
       s.shards+=shards;
       const souls=Math.floor(s.shards/10);
       if(souls){s.souls=add(s.souls,souls);s.shards%=10;}
-      const rarity=Math.random()<(.16+s.skills.r2*.035)?'lendario':'epico';
+      const rarity=weightedPick(['raro','epico','lendario'],[73,24,3]);
       const item=this.dropItem(rarity);
       const name=event.type==='goblin'?'Goblin do Tesouro':'Baú Raro';
       this.floatNumber(`+${fmt(gold)} OURO`,'reward');
       this.addLog(`${name}: +${fmt(gold)} ouro, +${fmt(xp)} XP, ${shards} fragmentos${souls?`, +${souls} alma(s)`:''}!`,'✦','epic');
-      this.toast(`TESOURO! +${fmt(gold)} ouro · ${rarity==='lendario'?'LENDÁRIO':'ÉPICO'} · ${shards} fragmentos`,'epic');
+      this.toast(`TESOURO! +${fmt(gold)} ouro · ${(RARITIES.find(r=>r.id===item?.rarity)?.label||'ITEM').toUpperCase()} · ${shards} fragmentos`,'epic');
       if(item)this.addLog(`Tesouro raro: ${item.name}!`,'◆','epic');
       this.renderEverything();this.save();
     }
     rollRarity() {
-      const s=this.state,b=this.bonuses();
-      const bias=s.skills.r2+b.luck*2+s.zone*.25;
-      const weights=[Math.max(15,58-bias*4),Math.max(10,27-bias),11+bias*.8,3.3+bias*1.5,.7+bias*.8];
-      const sum=weights.reduce((a,v)=>a+v,0);
-      let pickValue=Math.random()*sum;
-      for(let i=0;i<weights.length;i++){pickValue-=weights[i];if(pickValue<=0)return RARITIES[i].id;}
-      return 'comum';
+      const bonus=Math.min(8,this.state.skills.r2);
+      return weightedPick(['comum','incomum','raro','epico','lendario'],
+        [67,23,8,1.8+bonus*.12,.2+bonus*.025]);
     }
     chooseCatalogItem(forcedRarity=null,forcedKind=null) {
       const s=this.state,zone=s.zone;
@@ -857,18 +858,19 @@
       const kind=def.tipo==='material'?'material':def.tipo==='poção'?'potion':'equipment';
       const slot=CATALOG_SLOTS[def.tipo]||null;
       const rarity=CATALOG_RARITIES[def.raridade]||'comum';
-      const mult=(RARITIES.find(r=>r.id===rarity)||RARITIES[1]).multiplier;
+      const quality=kind==='equipment'?rollQuality():null;
+      const mult=kind==='equipment'?qualityMultiplier(rarity,quality):(RARITIES.find(r=>r.id===rarity)||RARITIES[1]).multiplier;
       const level=s.level;
       const scale=(1+Math.min(250,level)*.13+s.zone*.75)*mult;
-      const roll=()=>.86+Math.random()*.28;
+      const roll=()=>1;
       const stats=slotStats();
-      if(slot==='weapon'){stats.click=Math.max(1,Math.round(scale*3.4*roll()));if(mult>=1.95)stats.crit=Number((mult*.006*roll()).toFixed(4));}
+      if(slot==='weapon'){stats.click=Math.max(1,Math.round(scale*3.4*roll()));if(['raro','epico','lendario'].includes(rarity))stats.crit=Number((mult*.006*roll()).toFixed(4));}
       if(slot==='helmet'){stats.click=Math.round(scale*.9*roll());stats.defense=Number((scale*2.5*roll()).toFixed(1));stats.health=Math.round(scale*8*roll());}
-      if(slot==='armor'){stats.defense=Number((scale*4.5*roll()).toFixed(1));stats.health=Math.round(scale*13*roll());if(mult>=3)stats.dps=Number((scale*.9*roll()).toFixed(1));}
+      if(slot==='armor'){stats.defense=Number((scale*4.5*roll()).toFixed(1));stats.health=Math.round(scale*13*roll());if(['epico','lendario'].includes(rarity))stats.dps=Number((scale*.9*roll()).toFixed(1));}
       if(slot==='ring'){stats.gold=Number((scale*.018*roll()).toFixed(3));stats.crit=Number((mult*.007*roll()).toFixed(4));}
       if(slot==='necklace'){stats.click=Math.round(scale*.65*roll());stats.health=Math.round(scale*4.3*roll());stats.luck=Number((scale*.007*roll()).toFixed(3));}
       if(slot==='relic'){stats.luck=Number((scale*.012*roll()).toFixed(3));stats.dps=Number((scale*1.1*roll()).toFixed(1));}
-      return {id:uid(),catalogId:def.id,kind,slot,rarity,name:def.nome,level,qty:1,stats,createdAt:now()};
+      return {id:uid(),catalogId:def.id,kind,slot,rarity,quality,name:def.nome,level,qty:1,stats,createdAt:now()};
     }
     addItem(item,guaranteed=false) {
       if(!item)return null;
@@ -1230,7 +1232,7 @@
         return b.createdAt-a.createdAt;
       });
       const buff='';
-      return `<div class="section-headline"><div><h2>Arsenal do Errante</h2><p>100 itens temáticos · 6 slots de equipamento · sucatas e poções empilháveis. Ocupação: ${s.inventory.length}/${MAX_INVENTORY}.</p>${buff}</div></div>
+      return `<div class="section-headline"><div><h2>Arsenal do Errante</h2><p>Raridade define o potencial; qualidade (1–10) define o poder do equipamento. Itens anteriores mantêm seus atributos. Ocupação: ${s.inventory.length}/${MAX_INVENTORY}.</p>${buff}</div></div>
         <div class="equipment-strip">${equipment}</div>
         <div class="inventory-tools"><div class="filter-control"><label for="inventoryFilter">TIPO</label><select class="dark-select" id="inventoryFilter">${filterOptions}</select><label for="inventorySort">ORDEM</label><select class="dark-select" id="inventorySort">${sortOptions}</select></div><button type="button" class="subtle-button" data-sell-low>VENDER SUCATA + COMUNS</button></div>
         ${items.length?`<div class="inventory-grid">${items.map(item=>{
@@ -1239,7 +1241,7 @@
           const image=item.catalogId?catalogImage(item.catalogId):null;
           const detail=CATALOG_BY_ID.get(item.catalogId);
           const type=item.kind==='equipment'?SLOT_NAMES[item.slot]:item.kind==='potion'?'Poção':'Material';
-          return `<article class="item-card rarity-${item.rarity} ${equipped?'equipped':''}"><div class="item-top"><div class="item-glyph">${image?`<img src="${image}" alt="" class="item-icon" loading="lazy">`:item.slot?SLOT_SYMBOLS[item.slot]:'◇'}</div><div><div class="rarity">${rarity.label} · ${esc(type)}${item.kind==='equipment'?' · NV. '+item.level:''}${item.qty>1?' · x'+fmt(item.qty):''}</div><h3>${esc(item.name)}</h3></div></div><div class="item-stats">${item.kind==='equipment'?esc(this.itemStatLines(item)):item.kind==='potion'?'Consumível: restaura vida do herói durante o combate.':'Material comum: pode ser vendido por ouro.'}${detail?`<small class="item-origin">${esc(detail.regiao)}</small>`:''}</div><div class="item-actions">${item.kind==='equipment'?`<button type="button" data-equip="${esc(item.id)}">${equipped?'DESEQUIPAR':'EQUIPAR'}</button>`:item.kind==='potion'?`<button type="button" data-use="${esc(item.id)}">UTILIZAR</button>`:''}<button type="button" data-sell="${esc(item.id)}" ${equipped?'disabled':''}>VENDER · ${fmt(this.itemPrice(item)*item.qty)}</button></div></article>`;
+          return `<article class="item-card rarity-${item.rarity} ${equipped?'equipped':''}"><div class="item-top"><div class="item-glyph">${image?`<img src="${image}" alt="" class="item-icon" loading="lazy">`:item.slot?SLOT_SYMBOLS[item.slot]:'◇'}</div><div><div class="rarity">${rarity.label} · ${esc(type)}${item.kind==='equipment'?' · QUALIDADE '+(item.quality===null?'ANTERIOR':item.quality+'/10')+' · NV. '+item.level:''}${item.qty>1?' · x'+fmt(item.qty):''}</div><h3>${esc(item.name)}</h3></div></div><div class="item-stats">${item.kind==='equipment'?esc(this.itemStatLines(item)):item.kind==='potion'?'Consumível: restaura vida do herói durante o combate.':'Material comum: pode ser vendido por ouro.'}${detail?`<small class="item-origin">${esc(detail.regiao)}</small>`:''}</div><div class="item-actions">${item.kind==='equipment'?`<button type="button" data-equip="${esc(item.id)}">${equipped?'DESEQUIPAR':'EQUIPAR'}</button>`:item.kind==='potion'?`<button type="button" data-use="${esc(item.id)}">UTILIZAR</button>`:''}<button type="button" data-sell="${esc(item.id)}" ${equipped?'disabled':''}>VENDER · ${fmt(this.itemPrice(item)*item.qty)}</button></div></article>`;
         }).join('')}</div>`:`<div class="empty-state"><div class="empty-glyph">◇</div><strong>Nenhum item nesta categoria</strong>Derrote criaturas para encontrar equipamentos, materiais e poções.</div>`}`;
     }
     renderZones() {
