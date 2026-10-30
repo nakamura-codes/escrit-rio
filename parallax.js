@@ -1,26 +1,23 @@
-/* HELLWARD — Parallax 2.5D; enhancement only, combat logic untouched. */
+/* HD parallax: small horizontal depth offsets preserve the floor perspective. */
 (()=>{'use strict';
  const arena=document.getElementById('battlefield');
- if(!arena||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ if(!arena)return;
+ const motion=window.matchMedia('(prefers-reduced-motion: reduce)');
  const layers=[...arena.querySelectorAll('.parallax-layer')];
- let pending=false, point=[0,0];
+ let frame=0,point=0;
  function render(){
-   pending=false;
-   const [x,y]=point;
-   for(const layer of layers){
-     const d=Number(layer.dataset.depth)||0;
-     const mx = (-x*d*16);
-     const my = (-y*d*8);
-     layer.style.transform=`translate3d(${mx.toFixed(2)}px, ${my.toFixed(2)}px, 0)`;
-   }
+  frame=0;
+  for(const layer of layers){
+   const depth=Number(layer.dataset.depth)||0;
+   layer.style.transform=`translate3d(${(-point*depth*12).toFixed(2)}px, 0, 0)`;
+  }
  }
- function set(x,y){point=[x,y];if(!pending){pending=true;requestAnimationFrame(render)}}
- arena.addEventListener('pointermove',e=>{
-   if(e.pointerType==='touch')return;
-   const rect=arena.getBoundingClientRect();
-   if(!rect.width||!rect.height)return;
-   set(Math.max(-.5,Math.min(.5,(e.clientX-rect.left)/rect.width-.5))*2,
-       Math.max(-.5,Math.min(.5,(e.clientY-rect.top)/rect.height-.5))*2);
+ function set(value){point=motion.matches?0:value;if(!frame)frame=requestAnimationFrame(render);}
+ arena.addEventListener('pointermove',event=>{
+  if(event.pointerType==='touch'||motion.matches)return;
+  const rect=arena.getBoundingClientRect();
+  if(rect.width)set(Math.max(-1,Math.min(1,(event.clientX-rect.left)/rect.width*2-1)));
  },{passive:true});
- arena.addEventListener('pointerleave',()=>set(0,0),{passive:true});
+ arena.addEventListener('pointerleave',()=>set(0),{passive:true});
+ motion.addEventListener?.('change',()=>set(0));
 })();
