@@ -87,7 +87,7 @@
   const MONSTER_SPRITES = [
     ['condenado-errante.png', 'guerreiro-esqueletico.png', 'sentinela-caida.png', 'arqueiro-macabro.png', 'zumbi-errante.png', 'espadachim-corrompido.png', 'cavaleiro-decapitado.png'],
     ['lobo-sombrio.png', 'ratazana-pestilenta.png', 'lobo-da-praga.png', 'entorpecido-de-musgo.png', 'goblin-selvagem.png', 'rei-das-ratazanas.png', 'hidra-profanada.png'],
-    ['espectro-da-cripta.png', 'alma-enregelada.png', 'lamento-submerso.png', 'afogado-sem-rosto.png', 'sacerdote-esquecido.png', 'bruxa-das-criptas.png', 'rei-lich.png'],
+    ['espectro-da-cripta-v2.png', 'alma-enregelada.png', 'lamento-submerso.png', 'afogado-sem-rosto.png', 'sacerdote-esquecido.png', 'bruxa-das-criptas.png', 'rei-lich.png'],
     ['golem-ferrugem.png', 'carcereiro-runico.png', 'guardiao-de-basalto.png', 'orc-carniceiro.png', 'construto-enferrujado.png', 'ogro-do-ferro.png', 'cavaleiro-do-abismo.png'],
     ['arauto-das-chamas.png', 'demonio-carmesim.png', 'flagelo-abissal.png', 'sucubo-das-cinzas.png', 'sombra-incandescente.png', 'devorador-morbido.png', 'dragao-das-fendas.png'],
     ['lich-imortal.png', 'rei-das-sombras.png', 'devorador-de-estrelas.png', 'sacerdote-do-vazio.png', 'arauto-do-eclipse.png', 'medusa-do-eclipse.png', 'imperador-do-crepusculo.png'],
@@ -1300,5 +1300,12 @@
       if(b.hasAttribute('data-ascend')){this.requestAscension();}
     }
   }
+  // Recover the specter's portrait in combat, the bestiary and its dialog.
+  document.addEventListener('error', event => {
+    const image = event.target;
+    if (image instanceof HTMLImageElement && image.src.includes('/espectro-da-cripta-v2.png')) {
+      image.src = 'assets/monsters/espectro-da-cripta.svg?v=8.1';
+    }
+  }, true);
   new Game();
 })();

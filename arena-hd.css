@@ -6,7 +6,7 @@
 .battlefield.zone-4{--landscape:url('assets/backgrounds/hd/fendas-infernais.webp');--mist:200,100,70}
 .battlefield.zone-5{--landscape:url('assets/backgrounds/hd/trono-do-crepusculo.webp');--mist:155,130,190}
 .battlefield .parallax-world{filter:none;z-index:0}
-.battlefield .parallax-layer{inset:-3%;background-position:center center;background-size:cover;image-rendering:auto;transition:transform .65s cubic-bezier(.2,.65,.3,1);mask-image:none;-webkit-mask-image:none}
+.battlefield .parallax-layer{inset:-5%;background-position:center center;background-size:cover;image-rendering:auto;transition:none;mask-image:none;-webkit-mask-image:none}
 .battlefield .hd-horizon,.battlefield .hd-floor{background-image:var(--landscape);background-repeat:no-repeat;filter:none}
 .battlefield .hd-horizon{z-index:0}
 /* Sample only the open floor, below all architecture, at the same registration. */
@@ -18,3 +18,10 @@
 .battlefield .hero-ground-shadow{bottom:0;opacity:.8}
 .battlefield .mob-shadow{opacity:.8;bottom:0}
 @media(prefers-reduced-motion:reduce){.battlefield .parallax-layer{transition:none!important;transform:none!important}}
+
+/* The translucent cyan specter needs a brighter silhouette over the crypt. */
+.battlefield .monster-art img[src*="espectro-da-cripta"],
+.zone-bestiary img[src*="espectro-da-cripta"],
+.dialog-monster-preview[src*="espectro-da-cripta"]{
+ filter:brightness(1.65) contrast(1.08) drop-shadow(0 0 2px #80dce9) drop-shadow(0 5px 4px #000b);
+}
