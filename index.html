@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#15120f">
   <meta name="description" content="Hellward — RPG idle de fantasia sombria. Evolua, conquiste tesouros e renasça mais forte.">
+  <script src="ui.js?v=9.0"></script>
   <title>Hellward · Idle RPG</title>
   <link rel="stylesheet" href="styles.css?v=7.3">
   <link rel="stylesheet" href="arena.css?v=7.4">
   <link rel="stylesheet" href="arena-hd.css?v=8.1">
+  <link rel="stylesheet" href="ui.css?v=9.0">
   <script src="item-catalog.js?v=7.0" defer></script>
   <script src="game.js?v=8.1" defer></script>
   <script src="parallax.js?v=8.1" defer></script>
@@ -26,6 +28,7 @@
         <div class="resource-pill"><div class="resource-icon soul">◆</div><div><small>ALMAS</small><strong id="prestigeValue">0</strong></div></div>
         <div class="resource-pill fragment-pill"><div class="resource-icon shard">✧</div><div><small>FRAGMENTOS</small><strong id="fragmentValue">0 / 10</strong></div></div>
       </div>
+      <div class="ui-tools"><button id="focusBattle" type="button" aria-pressed="false">Focar batalha</button><button id="themeToggle" type="button" aria-pressed="true" aria-label="Alternar modo escuro">☾ Escuro</button></div>
       <button class="profile-button" id="switchProfile" type="button" title="Trocar perfil"><span class="profile-avatar" aria-hidden="true">♜</span><span class="profile-copy"><small>AVENTUREIRO</small><strong id="profileName">—</strong></span><span class="profile-chevron">⌄</span></button>
     </header>
 
